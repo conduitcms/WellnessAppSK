@@ -45,6 +45,30 @@ declare global {
   }
 }
 
+async function ensureTestAccount() {
+  try {
+    // Check if test account exists
+    const [existingUser] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, "test@example.com"))
+      .limit(1);
+
+    if (!existingUser) {
+      // Create test account
+      const hashedPassword = await crypto.hash("testpassword");
+      await db.insert(users).values({
+        username: "testuser",
+        email: "test@example.com",
+        password: hashedPassword,
+      });
+      console.log("Created test account");
+    }
+  } catch (error) {
+    console.error("Error ensuring test account:", error);
+  }
+}
+
 export function setupAuth(app: Express) {
   const MemoryStore = createMemoryStore(session);
   const sessionSettings: session.SessionOptions = {
@@ -64,6 +88,9 @@ export function setupAuth(app: Express) {
       ttl: 7 * 24 * 60 * 60 * 1000, // Match cookie maxAge
     }),
   };
+
+  // Ensure test account exists
+  ensureTestAccount();
 
   if (app.get("env") === "production") {
     app.set("trust proxy", 1);

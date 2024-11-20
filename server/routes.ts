@@ -133,12 +133,36 @@ export function registerRoutes(app: Express) {
     res.status(401).send("Not authenticated");
   });
 
-  // Middleware to ensure user is authenticated
-  const ensureAuth = (req: Request, res: Response, next: NextFunction) => {
+  // Middleware to ensure user is authenticated with test account
+  const ensureAuth = async (req: Request, res: Response, next: NextFunction) => {
     if (req.isAuthenticated()) {
       return next();
     }
-    res.status(401).send("Not authenticated");
+
+    try {
+      // Find test account
+      const [testUser] = await db
+        .select()
+        .from(users)
+        .where(eq(users.email, "test@example.com"))
+        .limit(1);
+
+      if (!testUser) {
+        return res.status(500).send("Test account not found");
+      }
+
+      // Auto-login with test account
+      req.login(testUser, (err) => {
+        if (err) {
+          console.error("Error logging in test account:", err);
+          return res.status(500).send("Authentication failed");
+        }
+        next();
+      });
+    } catch (error) {
+      console.error("Error in auth middleware:", error);
+      res.status(500).send("Authentication failed");
+    }
   };
 
   // Symptoms routes
