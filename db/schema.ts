@@ -45,7 +45,15 @@ export const healthMetrics = pgTable("health_metrics", {
 export const insertUserSchema = createInsertSchema(users);
 export const selectUserSchema = createSelectSchema(users);
 export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = z.infer<typeof selectUserSchema>;
+export interface User {
+  id: number;
+  username: string;
+  password: string;
+  name?: string | null;
+  dateOfBirth?: Date | null;
+  goals?: any[];
+}
+export type SelectUser = z.infer<typeof selectUserSchema>;
 
 export const insertSymptomSchema = createInsertSchema(symptoms);
 export const selectSymptomSchema = createSelectSchema(symptoms);

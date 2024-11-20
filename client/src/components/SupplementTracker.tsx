@@ -136,16 +136,29 @@ export default function SupplementTracker() {
                   className="p-4 border rounded-lg space-y-2"
                 >
                   <div className="flex justify-between items-center">
-                    <span className="font-medium">{supplement.name}</span>
-                    <span className="text-sm">{supplement.dosage}</span>
+                    <div>
+                      <span className="font-medium text-white">{supplement.name}</span>
+                      <p className="text-sm text-gray-400">{supplement.dosage}</p>
+                    </div>
+                    <Button 
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        toast({
+                          title: "Supplement Taken",
+                          description: `Marked ${supplement.name} as taken`,
+                        });
+                      }}
+                    >
+                      Take
+                    </Button>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    {supplement.frequency}
-                  </p>
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <span>
-                      Reminders:{" "}
-                      {supplement.reminderEnabled ? "Enabled" : "Disabled"}
+                  <div className="flex justify-between items-center mt-2">
+                    <p className="text-sm text-gray-400">
+                      Next dose: {supplement.reminderTime ? new Date(supplement.reminderTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Not scheduled'}
+                    </p>
+                    <span className="text-xs text-primary">
+                      {supplement.frequency}
                     </span>
                   </div>
                 </div>
