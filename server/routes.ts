@@ -158,8 +158,11 @@ export function registerRoutes(app: Express) {
       if (!result.success) {
         console.error('Symptom validation failed:', result.error);
         return res.status(400).json({
-          message: "Invalid input",
-          errors: result.error.issues,
+          message: "Invalid symptom data",
+          errors: result.error.issues.map(issue => ({
+            field: issue.path.join('.'),
+            message: issue.message
+          }))
         });
       }
 
@@ -206,8 +209,11 @@ export function registerRoutes(app: Express) {
       if (!result.success) {
         console.error('Supplement validation failed:', result.error);
         return res.status(400).json({
-          message: "Invalid input",
-          errors: result.error.issues,
+          message: "Invalid supplement data",
+          errors: result.error.issues.map(issue => ({
+            field: issue.path.join('.'),
+            message: issue.message
+          }))
         });
       }
 

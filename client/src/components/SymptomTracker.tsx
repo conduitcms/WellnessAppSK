@@ -32,7 +32,7 @@ export default function SymptomTracker() {
     },
   });
 
-  const { data: symptoms, isLoading: isLoadingSymptoms } = useQuery({
+  const { data: symptoms, isLoading: isLoadingSymptoms, error: symptomsError } = useQuery({
     queryKey: ["symptoms"],
     queryFn: async () => {
       try {
@@ -149,11 +149,23 @@ export default function SymptomTracker() {
                         min="1"
                         max="10"
                         {...field}
-                        onChange={(e) =>
-                          field.onChange(parseInt(e.target.value, 10))
-                        }
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value, 10);
+                          if (value < 1 || value > 10) {
+                            form.setError("severity", {
+                              type: "manual",
+                              message: "Severity must be between 1 and 10"
+                            });
+                          } else {
+                            form.clearErrors("severity");
+                          }
+                          field.onChange(value);
+                        }}
                       />
                     </FormControl>
+                    <p className="text-sm text-muted-foreground">
+                      Rate the severity from 1 (mild) to 10 (severe)
+                    </p>
                   </FormItem>
                 )}
               />
@@ -193,7 +205,11 @@ export default function SymptomTracker() {
         </CardHeader>
         <CardContent>
           {isLoadingSymptoms ? (
-            <p>Loading...</p>
+            <p className="text-center py-4">Loading symptoms...</p>
+          ) : symptomsError ? (
+            <div className="text-center py-4 text-destructive">
+              Error loading symptoms: {symptomsError.message}
+            </div>
           ) : (
             <div className="space-y-4">
               {symptoms?.map((symptom: any) => (

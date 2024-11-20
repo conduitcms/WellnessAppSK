@@ -26,7 +26,7 @@ export default function SupplementTracker() {
     },
   });
 
-  const { data: supplements, isLoading: isLoadingSupplements } = useQuery({
+  const { data: supplements, isLoading: isLoadingSupplements, error: supplementsError } = useQuery({
     queryKey: ["supplements"],
     queryFn: async () => {
       try {
@@ -138,8 +138,11 @@ export default function SupplementTracker() {
                   <FormItem>
                     <FormLabel>Frequency</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="e.g., Once daily" />
+                      <Input {...field} placeholder="e.g., Once daily with meals" />
                     </FormControl>
+                    <p className="text-sm text-muted-foreground">
+                      Specify how often to take this supplement
+                    </p>
                   </FormItem>
                 )}
               />
@@ -182,7 +185,11 @@ export default function SupplementTracker() {
         </CardHeader>
         <CardContent>
           {isLoadingSupplements ? (
-            <p>Loading...</p>
+            <p className="text-center py-4">Loading supplements...</p>
+          ) : supplementsError ? (
+            <div className="text-center py-4 text-destructive">
+              Error loading supplements: {supplementsError.message}
+            </div>
           ) : (
             <div className="space-y-4">
               {supplements?.map((supplement: any) => (
