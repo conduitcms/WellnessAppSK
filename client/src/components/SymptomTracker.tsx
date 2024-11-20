@@ -125,7 +125,7 @@ export default function SymptomTracker() {
                   <FormItem>
                     <FormLabel>Description</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} value={field.value ?? ''} />
                     </FormControl>
                   </FormItem>
                 )}

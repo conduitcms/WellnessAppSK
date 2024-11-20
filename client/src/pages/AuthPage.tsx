@@ -21,9 +21,9 @@ export default function AuthPage() {
       username: "",
       email: "",
       password: "",
-      name: null,
+      name: "",
       dateOfBirth: null,
-      goals: [],
+      goals: [] as any[],
     },
   });
 
@@ -101,7 +101,7 @@ export default function AuthPage() {
                     <FormItem>
                       <FormLabel>Full Name</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} value={field.value ?? ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
