@@ -30,7 +30,17 @@ const crypto = {
 
 declare global {
   namespace Express {
-    interface User extends User { }
+    interface User {
+      id: number;
+      username: string;
+      email: string;
+      name?: string | null;
+      dateOfBirth?: Date | null;
+      goals?: any[];
+      password: string;
+      resetToken?: string | null;
+      resetTokenExpiry?: Date | null;
+    }
   }
 }
 
