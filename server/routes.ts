@@ -244,9 +244,51 @@ export function registerRoutes(app: Express) {
     res.json(metric);
   });
 
+  // Timeout middleware
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    // Set timeout to 30 seconds
+    req.setTimeout(30000, () => {
+      res.status(408).json({
+        error: "Request Timeout",
+        message: "The request has timed out. Please try again.",
+      });
+    });
+    next();
+  });
+
   // Error handling middleware
   app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-    console.error(err);
-    res.status(500).send("Internal Server Error");
+    console.error('Server error:', err);
+    
+    if (err.name === 'TimeoutError') {
+      return res.status(408).json({
+        error: "Request Timeout",
+        message: "The request has timed out. Please try again.",
+      });
+    }
+
+    // Handle different types of errors
+    switch (err.name) {
+      case 'ValidationError':
+        return res.status(400).json({
+          error: "Validation Error",
+          message: err.message,
+        });
+      case 'AuthenticationError':
+        return res.status(401).json({
+          error: "Authentication Error",
+          message: err.message,
+        });
+      case 'DatabaseError':
+        return res.status(503).json({
+          error: "Database Error",
+          message: "A database error occurred. Please try again later.",
+        });
+      default:
+        return res.status(500).json({
+          error: "Internal Server Error",
+          message: "An unexpected error occurred. Please try again later.",
+        });
+    }
   });
 }

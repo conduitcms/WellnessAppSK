@@ -51,13 +51,17 @@ export function setupAuth(app: Express) {
     secret: process.env.REPL_ID || "women-health-app-secret",
     resave: false,
     saveUninitialized: false,
+    rolling: true, // Refresh session with each request
     cookie: {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       httpOnly: true,
       sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
     },
     store: new MemoryStore({
       checkPeriod: 86400000, // prune expired entries every 24h
+      stale: false, // Delete expired sessions
+      ttl: 7 * 24 * 60 * 60 * 1000, // Match cookie maxAge
     }),
   };
 
@@ -76,6 +80,10 @@ export function setupAuth(app: Express) {
       passwordField: 'password',
       passReqToCallback: true
     }, async (req, email, password, done) => {
+      const timeout = setTimeout(() => {
+        done(new Error('Authentication timeout'), false);
+      }, 30000); // 30 second timeout
+      
       try {
         // Validate input
         if (!email || !password) {
@@ -123,6 +131,8 @@ export function setupAuth(app: Express) {
         return done(err, false, { 
           message: "An error occurred during authentication." 
         });
+      } finally {
+        clearTimeout(timeout);
       }
     })
   );
