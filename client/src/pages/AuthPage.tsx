@@ -21,13 +21,22 @@ export default function AuthPage() {
       username: "",
       email: "",
       password: "",
-      name: "",
+      name: null,
+      dateOfBirth: null,
+      goals: [],
     },
   });
 
   async function onSubmit(data: InsertUser) {
     try {
-      const result = await (isLogin ? login(data) : register(data));
+      // Only include required fields for login
+      const loginData = isLogin ? {
+        username: data.username,
+        email: data.email,
+        password: data.password,
+      } : data;
+      
+      const result = await (isLogin ? login(loginData) : register(data));
       if (!result.ok) {
         toast({
           variant: "destructive",
@@ -65,27 +74,25 @@ export default function AuthPage() {
                   <FormItem>
                     <FormLabel>Username</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              {!isLogin && (
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input type="email" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" {...field} value={field.value ?? ''} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               {!isLogin && (
                 <FormField
                   control={form.control}
