@@ -9,7 +9,7 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   name: text("name"),
   dateOfBirth: timestamp("date_of_birth"),
-  goals: json("goals").default([]).notNull(),
+  goals: json("goals").$type<any[] | null>().default([]).notNull(),
   resetToken: text("reset_token").unique(),
   resetTokenExpiry: timestamp("reset_token_expiry")
 });
@@ -55,11 +55,11 @@ export interface User {
   username: string;
   email: string;
   password: string;
-  name?: string | null;
-  dateOfBirth?: Date | null;
-  goals?: any[];
-  resetToken?: string | null;
-  resetTokenExpiry?: Date | null;
+  name: string | null;
+  dateOfBirth: Date | null;
+  goals: any[] | null;
+  resetToken: string | null;
+  resetTokenExpiry: Date | null;
 }
 export type SelectUser = z.infer<typeof selectUserSchema>;
 
