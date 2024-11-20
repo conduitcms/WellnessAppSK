@@ -26,6 +26,7 @@ export default function SupplementTracker() {
   const form = useForm<InsertSupplement>({
     resolver: zodResolver(insertSupplementSchema),
     defaultValues,
+    mode: "onBlur",
   });
 
   const { data: supplements, isLoading: isLoadingSupplements, error: supplementsError } = useQuery({
@@ -81,14 +82,15 @@ export default function SupplementTracker() {
       }
     },
     onSuccess: () => {
+      form.reset(defaultValues);  // Use the defaultValues object
       queryClient.invalidateQueries({ queryKey: ["supplements"] });
-      form.reset();
       toast({
         title: "Success",
         description: "Supplement added successfully",
       });
     },
     onError: (error: Error) => {
+      console.error('Failed to add supplement:', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -106,18 +108,7 @@ export default function SupplementTracker() {
         <CardContent>
           <Form {...form}>
             <form
-              onSubmit={form.handleSubmit((data) => {
-                console.log('Form data before submission:', data);
-                const validationResult = insertSupplementSchema.safeParse(data);
-                console.log('Validation result:', validationResult);
-                
-                if (!validationResult.success) {
-                  console.error('Validation errors:', validationResult.error);
-                  return;
-                }
-                
-                createSupplement.mutate(data);
-              })}
+              onSubmit={form.handleSubmit((data) => createSupplement.mutate(data))}
               className="space-y-4"
             >
               <FormField
@@ -127,9 +118,13 @@ export default function SupplementTracker() {
                   <FormItem>
                     <FormLabel>Supplement Name</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Enter supplement name" />
+                      <Input 
+                        {...field} 
+                        placeholder="Enter supplement name" 
+                        aria-invalid={!!form.formState.errors.name}
+                      />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage>{form.formState.errors.name?.message}</FormMessage>
                   </FormItem>
                 )}
               />
@@ -140,8 +135,13 @@ export default function SupplementTracker() {
                   <FormItem>
                     <FormLabel>Dosage</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="e.g., 500mg" />
+                      <Input 
+                        {...field} 
+                        placeholder="e.g., 500mg" 
+                        aria-invalid={!!form.formState.errors.dosage}
+                      />
                     </FormControl>
+                    <FormMessage>{form.formState.errors.dosage?.message}</FormMessage>
                     <p className="text-sm text-muted-foreground">
                       Specify amount per dose (e.g., 500mg, 1 tablet)
                     </p>
@@ -156,8 +156,13 @@ export default function SupplementTracker() {
                   <FormItem>
                     <FormLabel>Frequency</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="e.g., Once daily with meals" />
+                      <Input 
+                        {...field} 
+                        placeholder="e.g., Once daily with meals" 
+                        aria-invalid={!!form.formState.errors.frequency}
+                      />
                     </FormControl>
+                    <FormMessage>{form.formState.errors.frequency?.message}</FormMessage>
                     <p className="text-sm text-muted-foreground">
                       Specify how often to take this supplement
                     </p>
