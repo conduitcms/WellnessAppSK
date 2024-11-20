@@ -60,24 +60,26 @@ export default function SupplementTracker() {
 
         const response = await fetch("/api/supplements", {
           method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            "Accept": "application/json"
+          headers: {
+            "Content-Type": "application/json"
           },
-          body: JSON.stringify(data),
+          body: JSON.stringify(data)
         });
 
         if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Failed to create supplement:', errorText);
-          throw new Error(errorText || "Failed to create supplement");
+          throw new Error(await response.text());
         }
 
         const result = await response.json();
         console.log('Created supplement:', result);
         return result;
       } catch (error) {
-        console.error('Error creating supplement:', error);
+        console.error('Form submission error:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to add supplement. Please try again."
+        });
         throw error;
       }
     },
@@ -108,7 +110,19 @@ export default function SupplementTracker() {
         <CardContent>
           <Form {...form}>
             <form
-              onSubmit={form.handleSubmit((data) => createSupplement.mutate(data))}
+              onSubmit={form.handleSubmit((data) => {
+                console.log('Submitting form data:', data);
+                createSupplement.mutate({
+                  ...data,
+                  // Ensure all required fields are included
+                  name: data.name,
+                  dosage: data.dosage,
+                  frequency: data.frequency,
+                  reminderEnabled: data.reminderEnabled || false,
+                  reminderTime: data.reminderTime || null,
+                  notes: data.notes || ''
+                });
+              })}
               className="space-y-4"
             >
               <FormField
@@ -173,7 +187,7 @@ export default function SupplementTracker() {
               />
               <Button 
                 type="submit" 
-                disabled={createSupplement.isPending || form.formState.isSubmitting}
+                disabled={createSupplement.isPending}
                 className="w-full"
               >
                 {createSupplement.isPending ? (
