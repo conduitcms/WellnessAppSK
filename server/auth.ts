@@ -11,6 +11,7 @@ import { eq } from "drizzle-orm";
 
 const scryptAsync = promisify(scrypt);
 const crypto = {
+  randomBytes,
   hash: async (password: string) => {
     const salt = randomBytes(16).toString("hex");
     const buf = (await scryptAsync(password, salt, 64)) as Buffer;
@@ -34,10 +35,10 @@ declare global {
       id: number;
       username: string;
       email: string;
+      password: string;
       name?: string | null;
       dateOfBirth?: Date | null;
-      goals?: any[];
-      password: string;
+      goals: any[] | null;
       resetToken?: string | null;
       resetTokenExpiry?: Date | null;
     }

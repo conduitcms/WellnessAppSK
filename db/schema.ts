@@ -9,7 +9,7 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   name: text("name"),
   dateOfBirth: timestamp("date_of_birth"),
-  goals: json("goals").default([]),
+  goals: json("goals").default([]).notNull(),
   resetToken: text("reset_token").unique(),
   resetTokenExpiry: timestamp("reset_token_expiry")
 });
