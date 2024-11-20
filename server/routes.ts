@@ -1,14 +1,14 @@
-import { type Express } from "express";
+import { type Express, type Request, type Response, type NextFunction } from "express";
 import { setupAuth } from "./auth";
 import { db } from "../db";
-import { symptoms, supplements, healthMetrics } from "@db/schema";
+import { users, symptoms, supplements, healthMetrics } from "@db/schema";
 import { eq } from "drizzle-orm";
 
 export function registerRoutes(app: Express) {
   const { passport, crypto } = setupAuth(app);
 
   // Auth routes
-  app.post("/api/register", async (req, res, next) => {
+  app.post("/api/register", async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { username, password } = req.body;
       const [existingUser] = await db
@@ -39,18 +39,18 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  app.post("/api/login", passport.authenticate("local"), (req, res) => {
+  app.post("/api/login", passport.authenticate("local"), (req: Request, res: Response) => {
     res.json({ message: "Login successful" });
   });
 
-  app.post("/api/logout", (req, res) => {
+  app.post("/api/logout", (req: Request, res: Response) => {
     req.logout((err) => {
       if (err) return res.status(500).send("Logout failed");
       res.json({ message: "Logout successful" });
     });
   });
 
-  app.get("/api/user", (req, res) => {
+  app.get("/api/user", (req: Request, res: Response) => {
     if (req.isAuthenticated()) {
       return res.json(req.user);
     }
@@ -58,7 +58,7 @@ export function registerRoutes(app: Express) {
   });
 
   // Middleware to ensure user is authenticated
-  const ensureAuth = (req: Express.Request, res: Express.Response, next: Express.NextFunction) => {
+  const ensureAuth = (req: Request, res: Response, next: NextFunction) => {
     if (req.isAuthenticated()) {
       return next();
     }
@@ -66,7 +66,7 @@ export function registerRoutes(app: Express) {
   };
 
   // Symptoms routes
-  app.get("/api/symptoms", ensureAuth, async (req, res) => {
+  app.get("/api/symptoms", ensureAuth, async (req: Request, res: Response) => {
     const userSymptoms = await db
       .select()
       .from(symptoms)
@@ -75,14 +75,14 @@ export function registerRoutes(app: Express) {
     res.json(userSymptoms);
   });
 
-  app.post("/api/symptoms", ensureAuth, async (req, res) => {
+  app.post("/api/symptoms", ensureAuth, async (req: Request, res: Response) => {
     const data = { ...req.body, userId: req.user!.id };
     const [symptom] = await db.insert(symptoms).values(data).returning();
     res.json(symptom);
   });
 
   // Supplements routes
-  app.get("/api/supplements", ensureAuth, async (req, res) => {
+  app.get("/api/supplements", ensureAuth, async (req: Request, res: Response) => {
     const userSupplements = await db
       .select()
       .from(supplements)
@@ -90,14 +90,14 @@ export function registerRoutes(app: Express) {
     res.json(userSupplements);
   });
 
-  app.post("/api/supplements", ensureAuth, async (req, res) => {
+  app.post("/api/supplements", ensureAuth, async (req: Request, res: Response) => {
     const data = { ...req.body, userId: req.user!.id };
     const [supplement] = await db.insert(supplements).values(data).returning();
     res.json(supplement);
   });
 
   // Health metrics routes
-  app.get("/api/health-metrics", ensureAuth, async (req, res) => {
+  app.get("/api/health-metrics", ensureAuth, async (req: Request, res: Response) => {
     const userMetrics = await db
       .select()
       .from(healthMetrics)
@@ -106,14 +106,14 @@ export function registerRoutes(app: Express) {
     res.json(userMetrics);
   });
 
-  app.post("/api/health-metrics", ensureAuth, async (req, res) => {
+  app.post("/api/health-metrics", ensureAuth, async (req: Request, res: Response) => {
     const data = { ...req.body, userId: req.user!.id };
     const [metric] = await db.insert(healthMetrics).values(data).returning();
     res.json(metric);
   });
 
   // Error handling middleware
-  app.use((err: Error, req: Express.Request, res: Express.Response, next: Express.NextFunction) => {
+  app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     console.error(err);
     res.status(500).send("Internal Server Error");
   });
