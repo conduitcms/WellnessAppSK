@@ -26,7 +26,7 @@ export default function SupplementTracker() {
   const form = useForm<InsertSupplement>({
     resolver: zodResolver(insertSupplementSchema),
     defaultValues,
-    mode: "onBlur",
+    mode: "onChange",  // Show errors immediately
   });
 
   const { data: supplements, isLoading: isLoadingSupplements, error: supplementsError } = useQuery({
@@ -118,13 +118,9 @@ export default function SupplementTracker() {
                   <FormItem>
                     <FormLabel>Supplement Name</FormLabel>
                     <FormControl>
-                      <Input 
-                        {...field} 
-                        placeholder="Enter supplement name" 
-                        aria-invalid={!!form.formState.errors.name}
-                      />
+                      <Input {...field} placeholder="Enter supplement name" />
                     </FormControl>
-                    <FormMessage>{form.formState.errors.name?.message}</FormMessage>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -135,17 +131,12 @@ export default function SupplementTracker() {
                   <FormItem>
                     <FormLabel>Dosage</FormLabel>
                     <FormControl>
-                      <Input 
-                        {...field} 
-                        placeholder="e.g., 500mg" 
-                        aria-invalid={!!form.formState.errors.dosage}
-                      />
+                      <Input {...field} placeholder="e.g., 500mg" />
                     </FormControl>
-                    <FormMessage>{form.formState.errors.dosage?.message}</FormMessage>
+                    <FormMessage />
                     <p className="text-sm text-muted-foreground">
                       Specify amount per dose (e.g., 500mg, 1 tablet)
                     </p>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -156,17 +147,12 @@ export default function SupplementTracker() {
                   <FormItem>
                     <FormLabel>Frequency</FormLabel>
                     <FormControl>
-                      <Input 
-                        {...field} 
-                        placeholder="e.g., Once daily with meals" 
-                        aria-invalid={!!form.formState.errors.frequency}
-                      />
+                      <Input {...field} placeholder="e.g., Once daily with meals" />
                     </FormControl>
-                    <FormMessage>{form.formState.errors.frequency?.message}</FormMessage>
+                    <FormMessage />
                     <p className="text-sm text-muted-foreground">
                       Specify how often to take this supplement
                     </p>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
