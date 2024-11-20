@@ -1,0 +1,61 @@
+
+> rest-express@1.0.0 dev
+> tsx watch --clear-screen=false --exclude vite.config.ts.* server/index.ts
+
+10:00:23 PM [express] serving on port 5000
+
+ ERROR(TypeScript)  Cannot find name 'FormMessage'. Did you mean 'onmessage'?
+ FILE  /home/runner/WomensWellnessApp/client/src/components/SupplementTracker.tsx:141:22
+
+    139 |                       <Input {...field} placeholder="Enter supplement name" />
+    140 |                     </FormControl>
+  > 141 |                     <FormMessage />
+        |                      ^^^^^^^^^^^
+    142 |                   </FormItem>
+    143 |                 )}
+    144 |               />
+
+ ERROR(TypeScript)  Cannot find name 'FormMessage'. Did you mean 'onmessage'?
+ FILE  /home/runner/WomensWellnessApp/client/src/components/SupplementTracker.tsx:157:22
+
+    155 |                       Specify amount per dose (e.g., 500mg, 1 tablet)
+    156 |                     </p>
+  > 157 |                     <FormMessage />
+        |                      ^^^^^^^^^^^
+    158 |                   </FormItem>
+    159 |                 )}
+    160 |               />
+
+[TypeScript] Found 2 errors. Watching for file changes.
+
+> rest-express@1.0.0 dev
+> tsx watch --clear-screen=false --exclude vite.config.ts.* server/index.ts
+
+10:00:23 PM [express] serving on port 5000
+
+ ERROR(TypeScript)  Cannot find name 'FormMessage'. Did you mean 'onmessage'?
+ FILE  /home/runner/WomensWellnessApp/client/src/components/SupplementTracker.tsx:141:22
+
+    139 |                       <Input {...field} placeholder="Enter supplement name" />
+    140 |                     </FormControl>
+  > 141 |                     <FormMessage />
+        |                      ^^^^^^^^^^^
+    142 |                   </FormItem>
+    143 |                 )}
+    144 |               />
+
+ ERROR(TypeScript)  Cannot find name 'FormMessage'. Did you mean 'onmessage'?
+ FILE  /home/runner/WomensWellnessApp/client/src/components/SupplementTracker.tsx:157:22
+
+    155 |                       Specify amount per dose (e.g., 500mg, 1 tablet)
+    156 |                     </p>
+  > 157 |                     <FormMessage />
+        |                      ^^^^^^^^^^^
+    158 |                   </FormItem>
+    159 |                 )}
+    160 |               />
+
+[TypeScript] Found 2 errors. Watching for file changes.
+10:09:16 PM [express] GET /api/user 401 in 2ms
+10:09:28 PM [express] POST /api/login 200 in 821ms :: {"message":"Login successful"}
+10:09:28 PM [express] GET /api/user 304 in 32ms :: {"id":1,"username":"testuser","email":"test@exampl…
