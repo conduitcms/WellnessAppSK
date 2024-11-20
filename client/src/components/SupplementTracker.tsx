@@ -112,9 +112,18 @@ export default function SupplementTracker() {
                   onSuccess: () => {
                     console.log('Successfully added supplement');
                     form.reset(defaultValues);
+                    toast({
+                      title: "Success",
+                      description: "Supplement added successfully",
+                    });
                   },
                   onError: (error) => {
                     console.error('Failed to add supplement:', error);
+                    toast({
+                      variant: "destructive",
+                      title: "Error",
+                      description: error instanceof Error ? error.message : "Failed to add supplement",
+                    });
                   }
                 });
               })}
@@ -127,8 +136,9 @@ export default function SupplementTracker() {
                   <FormItem>
                     <FormLabel>Supplement Name</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} placeholder="Enter supplement name" />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -139,8 +149,12 @@ export default function SupplementTracker() {
                   <FormItem>
                     <FormLabel>Dosage</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} placeholder="e.g., 500mg" />
                     </FormControl>
+                    <p className="text-sm text-muted-foreground">
+                      Specify amount per dose (e.g., 500mg, 1 tablet)
+                    </p>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
