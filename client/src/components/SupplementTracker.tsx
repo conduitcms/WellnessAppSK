@@ -6,6 +6,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { insertSupplementSchema, type InsertSupplement } from "@db/schema";
 
@@ -180,7 +181,7 @@ export default function SupplementTracker() {
           <CardTitle>My Supplements</CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
+          {isLoadingSupplements ? (
             <p>Loading...</p>
           ) : (
             <div className="space-y-4">

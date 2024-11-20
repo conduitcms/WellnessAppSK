@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { insertSymptomSchema, type InsertSymptom } from "@db/schema";
@@ -191,7 +192,7 @@ export default function SymptomTracker() {
           <CardTitle>Recent Symptoms</CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
+          {isLoadingSymptoms ? (
             <p>Loading...</p>
           ) : (
             <div className="space-y-4">

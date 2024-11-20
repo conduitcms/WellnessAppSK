@@ -1,0 +1,72 @@
+> rest-express@1.0.0 dev
+> tsx watch --clear-screen=false --exclude vite.config.ts.* server/index.ts
+
+09:33:15 PM [express] serving on port 5000
+
+ ERROR(TypeScript)  Cannot find name 'Loader2'.
+ FILE  /home/runner/WomensWellnessApp/client/src/components/SupplementTracker.tsx:166:22
+
+    164 |                 {createSupplement.isPending ? (
+    165 |                   <>
+  > 166 |                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        |                      ^^^^^^^
+    167 |                     Adding...
+    168 |                   </>
+    169 |                 ) : (
+
+ ERROR(TypeScript)  Cannot find name 'isLoading'.
+ FILE  /home/runner/WomensWellnessApp/client/src/components/SupplementTracker.tsx:183:12
+
+    181 |         </CardHeader>
+    182 |         <CardContent>
+  > 183 |           {isLoading ? (
+        |            ^^^^^^^^^
+    184 |             <p>Loading...</p>
+    185 |           ) : (
+    186 |             <div className="space-y-4">
+
+ ERROR(TypeScript)  Cannot find name 'Loader2'.
+ FILE  /home/runner/WomensWellnessApp/client/src/components/SymptomTracker.tsx:177:22
+
+    175 |                 {createSymptom.isPending ? (
+    176 |                   <>
+  > 177 |                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        |                      ^^^^^^^
+    178 |                     Logging...
+    179 |                   </>
+    180 |                 ) : (
+
+ ERROR(TypeScript)  Cannot find name 'isLoading'.
+ FILE  /home/runner/WomensWellnessApp/client/src/components/SymptomTracker.tsx:194:12
+
+    192 |         </CardHeader>
+    193 |         <CardContent>
+  > 194 |           {isLoading ? (
+        |            ^^^^^^^^^
+    195 |             <p>Loading...</p>
+    196 |           ) : (
+    197 |             <div className="space-y-4">
+
+ ERROR(TypeScript)  Cannot find name 'insertSymptomSchema'.
+ FILE  /home/runner/WomensWellnessApp/server/routes.ts:157:22
+
+    155 |     try {
+    156 |       // Validate request body
+  > 157 |       const result = insertSymptomSchema.safeParse({ ...req.body, userId: req.user!.id });
+        |                      ^^^^^^^^^^^^^^^^^^^
+    158 |       if (!result.success) {
+    159 |         console.error('Symptom validation failed:', result.error);
+    160 |         return res.status(400).json({
+
+ ERROR(TypeScript)  Cannot find name 'insertSupplementSchema'.
+ FILE  /home/runner/WomensWellnessApp/server/routes.ts:205:22
+
+    203 |     try {
+    204 |       // Validate request body
+  > 205 |       const result = insertSupplementSchema.safeParse({ ...req.body, userId: req.user!.id });
+        |                      ^^^^^^^^^^^^^^^^^^^^^^
+    206 |       if (!result.success) {
+    207 |         console.error('Supplement validation failed:', result.error);
+    208 |         return res.status(400).json({
+
+[TypeScript] Found 6 errors. Watching for file changes.

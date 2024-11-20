@@ -1,7 +1,7 @@
 import { type Express, type Request, type Response, type NextFunction } from "express";
 import { setupAuth } from "./auth";
 import { db } from "../db";
-import { users, symptoms, supplements, healthMetrics } from "@db/schema";
+import { users, symptoms, supplements, healthMetrics, insertSymptomSchema, insertSupplementSchema } from "@db/schema";
 import { eq } from "drizzle-orm";
 
 export function registerRoutes(app: Express) {
