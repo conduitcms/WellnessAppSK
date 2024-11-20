@@ -26,7 +26,7 @@ export default function SupplementTracker() {
   const form = useForm<InsertSupplement>({
     resolver: zodResolver(insertSupplementSchema),
     defaultValues,
-    mode: "onChange",  // Show errors immediately
+    mode: "onTouched"
   });
 
   const { data: supplements, isLoading: isLoadingSupplements, error: supplementsError } = useQuery({
@@ -92,11 +92,11 @@ export default function SupplementTracker() {
       });
     },
     onError: (error: Error) => {
-      console.error('Failed to add supplement:', error);
+      console.error('Supplement creation failed:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to add supplement",
+        description: error.message || "Failed to add supplement"
       });
     },
   });
@@ -111,17 +111,7 @@ export default function SupplementTracker() {
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit((data) => {
-                console.log('Submitting form data:', data);
-                createSupplement.mutate({
-                  ...data,
-                  // Ensure all required fields are included
-                  name: data.name,
-                  dosage: data.dosage,
-                  frequency: data.frequency,
-                  reminderEnabled: data.reminderEnabled || false,
-                  reminderTime: data.reminderTime || null,
-                  notes: data.notes || ''
-                });
+                createSupplement.mutate(data);
               })}
               className="space-y-4"
             >
@@ -209,7 +199,7 @@ export default function SupplementTracker() {
           <CardTitle>My Supplements</CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoadingSupplements ? (
+          {createSupplement.isPending ? (
             <p className="text-center py-4">Loading supplements...</p>
           ) : supplementsError ? (
             <div className="text-center py-4 text-destructive">
