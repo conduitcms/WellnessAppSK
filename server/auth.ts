@@ -71,16 +71,26 @@ export function setupAuth(app: Express) {
   app.use(passport.session());
 
   passport.use(
-    new LocalStrategy({ usernameField: 'email' }, async (email, password, done) => {
+    new LocalStrategy({ 
+      usernameField: 'email',
+      passwordField: 'password',
+      passReqToCallback: true
+    }, async (req, email, password, done) => {
       try {
-        // Try to find user by email or username
-        const [user] = await db
+        // Validate input
+        if (!email || !password) {
+          return done(null, false, { message: "Email/username and password are required." });
+        }
+
+        // Try to find user by email
+        let user = null;
+        const [userByEmail] = await db
           .select()
           .from(users)
           .where(eq(users.email, email))
           .limit(1);
 
-        if (!user) {
+        if (!userByEmail) {
           // If not found by email, try username
           const [userByUsername] = await db
             .select()
@@ -89,23 +99,30 @@ export function setupAuth(app: Express) {
             .limit(1);
 
           if (!userByUsername) {
-            return done(null, false, { message: "Invalid email/username or password." });
+            return done(null, false, { 
+              message: "No account found with this email/username." 
+            });
           }
-
-          const isMatch = await crypto.compare(password, userByUsername.password);
-          if (!isMatch) {
-            return done(null, false, { message: "Invalid email/username or password." });
-          }
-          return done(null, userByUsername);
+          user = userByUsername;
+        } else {
+          user = userByEmail;
         }
 
+        // Verify password
         const isMatch = await crypto.compare(password, user.password);
         if (!isMatch) {
-          return done(null, false, { message: "Invalid email/username or password." });
+          return done(null, false, { 
+            message: "Incorrect password." 
+          });
         }
+
+        // Successfully authenticated
         return done(null, user);
       } catch (err) {
-        return done(err);
+        console.error('Authentication error:', err);
+        return done(err, false, { 
+          message: "An error occurred during authentication." 
+        });
       }
     })
   );

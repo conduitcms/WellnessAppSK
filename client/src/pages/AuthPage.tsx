@@ -9,8 +9,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useUser } from "../hooks/use-user";
 import { insertUserSchema, type InsertUser } from "@db/schema";
 
-interface AuthFormValues extends InsertUser {
-  // Additional form-specific fields can be added here if needed
+interface AuthFormValues {
+  username: string;
+  email: string;
+  password: string;
+  name?: string;
+  dateOfBirth?: Date | null;
+  goals?: any[];
 }
 
 export default function AuthPage() {

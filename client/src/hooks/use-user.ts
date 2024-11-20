@@ -15,25 +15,46 @@ async function handleRequest(
   body?: InsertUser
 ): Promise<RequestResult> {
   try {
+    // Validate input for login/register
+    if (body) {
+      if (!body.email && !body.username) {
+        return { ok: false, message: "Email or username is required" };
+      }
+      if (!body.password) {
+        return { ok: false, message: "Password is required" };
+      }
+    }
+
     const response = await fetch(url, {
       method,
-      headers: body ? { "Content-Type": "application/json" } : undefined,
+      headers: body ? { 
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      } : undefined,
       body: body ? JSON.stringify(body) : undefined,
       credentials: "include",
+    }).catch(error => {
+      throw new Error(`Network error: ${error.message}`);
     });
 
     if (!response.ok) {
       if (response.status >= 500) {
-        return { ok: false, message: response.statusText };
+        return { ok: false, message: "Server error occurred. Please try again later." };
+      }
+
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        const errorData = await response.json();
+        return { ok: false, message: errorData.message || "Authentication failed" };
       }
 
       const message = await response.text();
-      return { ok: false, message };
+      return { ok: false, message: message || "Authentication failed" };
     }
 
     return { ok: true };
   } catch (e: any) {
-    return { ok: false, message: e.toString() };
+    return { ok: false, message: `Authentication error: ${e.message}` };
   }
 }
 
