@@ -14,16 +14,18 @@ export default function SupplementTracker() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const defaultValues = {
+    name: "",
+    dosage: "",
+    frequency: "",
+    reminderEnabled: false,
+    reminderTime: null,
+    notes: "",
+  };
+
   const form = useForm<InsertSupplement>({
     resolver: zodResolver(insertSupplementSchema),
-    defaultValues: {
-      name: "",
-      dosage: "",
-      frequency: "",
-      reminderEnabled: false,
-      reminderTime: null,
-      notes: "",
-    },
+    defaultValues,
   });
 
   const { data: supplements, isLoading: isLoadingSupplements, error: supplementsError } = useQuery({
@@ -104,7 +106,18 @@ export default function SupplementTracker() {
         <CardContent>
           <Form {...form}>
             <form
-              onSubmit={form.handleSubmit((data) => createSupplement.mutate(data))}
+              onSubmit={form.handleSubmit((data) => {
+                console.log('Submitting supplement form with data:', data);
+                createSupplement.mutate(data, {
+                  onSuccess: () => {
+                    console.log('Successfully added supplement');
+                    form.reset(defaultValues);
+                  },
+                  onError: (error) => {
+                    console.error('Failed to add supplement:', error);
+                  }
+                });
+              })}
               className="space-y-4"
             >
               <FormField

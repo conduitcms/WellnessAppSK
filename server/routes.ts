@@ -204,6 +204,11 @@ export function registerRoutes(app: Express) {
 
   app.post("/api/supplements", ensureAuth, async (req: Request, res: Response) => {
     try {
+      console.log('Received supplement creation request:', {
+        ...req.body,
+        userId: req.user!.id
+      });
+
       // Validate request body
       const result = insertSupplementSchema.safeParse({ ...req.body, userId: req.user!.id });
       if (!result.success) {
@@ -222,9 +227,14 @@ export function registerRoutes(app: Express) {
         result.data.reminderTime = new Date(result.data.reminderTime);
       }
 
-      const [supplement] = await db.insert(supplements).values(result.data).returning();
-      console.log('Created supplement:', supplement);
-      res.json(supplement);
+      try {
+        const [supplement] = await db.insert(supplements).values(result.data).returning();
+        console.log('Successfully created supplement:', supplement);
+        res.json(supplement);
+      } catch (dbError) {
+        console.error('Database error while creating supplement:', dbError);
+        throw new Error('Failed to save supplement to database');
+      }
     } catch (error) {
       console.error('Error creating supplement:', error);
       res.status(500).json({
