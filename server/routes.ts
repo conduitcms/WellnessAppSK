@@ -152,24 +152,80 @@ export function registerRoutes(app: Express) {
   });
 
   app.post("/api/symptoms", ensureAuth, async (req: Request, res: Response) => {
-    const data = { ...req.body, userId: req.user!.id };
-    const [symptom] = await db.insert(symptoms).values(data).returning();
-    res.json(symptom);
+    try {
+      // Validate request body
+      const result = insertSymptomSchema.safeParse({ ...req.body, userId: req.user!.id });
+      if (!result.success) {
+        console.error('Symptom validation failed:', result.error);
+        return res.status(400).json({
+          message: "Invalid input",
+          errors: result.error.issues,
+        });
+      }
+
+      // Validate severity range
+      if (result.data.severity < 1 || result.data.severity > 10) {
+        return res.status(400).json({
+          message: "Severity must be between 1 and 10",
+        });
+      }
+
+      const [symptom] = await db.insert(symptoms).values(result.data).returning();
+      console.log('Created symptom:', symptom);
+      res.json(symptom);
+    } catch (error) {
+      console.error('Error creating symptom:', error);
+      res.status(500).json({
+        message: "Failed to create symptom",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
   });
 
   // Supplements routes
   app.get("/api/supplements", ensureAuth, async (req: Request, res: Response) => {
-    const userSupplements = await db
-      .select()
-      .from(supplements)
-      .where(eq(supplements.userId, req.user!.id));
-    res.json(userSupplements);
+    try {
+      const userSupplements = await db
+        .select()
+        .from(supplements)
+        .where(eq(supplements.userId, req.user!.id));
+      res.json(userSupplements);
+    } catch (error) {
+      console.error('Error fetching supplements:', error);
+      res.status(500).json({
+        message: "Failed to fetch supplements",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
   });
 
   app.post("/api/supplements", ensureAuth, async (req: Request, res: Response) => {
-    const data = { ...req.body, userId: req.user!.id };
-    const [supplement] = await db.insert(supplements).values(data).returning();
-    res.json(supplement);
+    try {
+      // Validate request body
+      const result = insertSupplementSchema.safeParse({ ...req.body, userId: req.user!.id });
+      if (!result.success) {
+        console.error('Supplement validation failed:', result.error);
+        return res.status(400).json({
+          message: "Invalid input",
+          errors: result.error.issues,
+        });
+      }
+
+      // Handle reminder time
+      if (result.data.reminderEnabled && result.data.reminderTime) {
+        result.data.reminderTime = new Date(result.data.reminderTime);
+      }
+
+      const [supplement] = await db.insert(supplements).values(result.data).returning();
+      console.log('Created supplement:', supplement);
+      res.json(supplement);
+    } catch (error) {
+      console.error('Error creating supplement:', error);
+      res.status(500).json({
+        message: "Failed to create supplement",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
   });
 
   // Health metrics routes

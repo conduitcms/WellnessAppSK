@@ -31,24 +31,55 @@ export default function SymptomTracker() {
     },
   });
 
-  const { data: symptoms, isLoading } = useQuery({
+  const { data: symptoms, isLoading: isLoadingSymptoms } = useQuery({
     queryKey: ["symptoms"],
     queryFn: async () => {
-      const response = await fetch("/api/symptoms");
-      if (!response.ok) throw new Error("Failed to fetch symptoms");
-      return response.json();
+      try {
+        const response = await fetch("/api/symptoms");
+        if (!response.ok) {
+          console.error('Failed to fetch symptoms:', await response.text());
+          throw new Error("Failed to fetch symptoms");
+        }
+        const data = await response.json();
+        console.log('Fetched symptoms:', data);
+        return data;
+      } catch (error) {
+        console.error('Error fetching symptoms:', error);
+        throw error;
+      }
     },
   });
 
   const createSymptom = useMutation({
     mutationFn: async (data: InsertSymptom) => {
-      const response = await fetch("/api/symptoms", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error("Failed to create symptom");
-      return response.json();
+      try {
+        // Validate severity is between 1 and 10
+        if (data.severity < 1 || data.severity > 10) {
+          throw new Error("Severity must be between 1 and 10");
+        }
+
+        const response = await fetch("/api/symptoms", {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify(data),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Failed to create symptom:', errorText);
+          throw new Error(errorText || "Failed to create symptom");
+        }
+
+        const result = await response.json();
+        console.log('Created symptom:', result);
+        return result;
+      } catch (error) {
+        console.error('Error creating symptom:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["symptoms"] });
@@ -56,6 +87,13 @@ export default function SymptomTracker() {
       toast({
         title: "Success",
         description: "Symptom logged successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to log symptom",
       });
     },
   });
@@ -130,7 +168,19 @@ export default function SymptomTracker() {
                   </FormItem>
                 )}
               />
-              <Button type="submit">Log Symptom</Button>
+              <Button 
+                type="submit" 
+                disabled={createSymptom.isPending}
+              >
+                {createSymptom.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Logging...
+                  </>
+                ) : (
+                  "Log Symptom"
+                )}
+              </Button>
             </form>
           </Form>
         </CardContent>

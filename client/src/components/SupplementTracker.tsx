@@ -20,27 +20,62 @@ export default function SupplementTracker() {
       dosage: "",
       frequency: "",
       reminderEnabled: false,
+      reminderTime: null,
+      notes: "",
     },
   });
 
-  const { data: supplements, isLoading } = useQuery({
+  const { data: supplements, isLoading: isLoadingSupplements } = useQuery({
     queryKey: ["supplements"],
     queryFn: async () => {
-      const response = await fetch("/api/supplements");
-      if (!response.ok) throw new Error("Failed to fetch supplements");
-      return response.json();
+      try {
+        const response = await fetch("/api/supplements");
+        if (!response.ok) {
+          console.error('Failed to fetch supplements:', await response.text());
+          throw new Error("Failed to fetch supplements");
+        }
+        const data = await response.json();
+        console.log('Fetched supplements:', data);
+        return data;
+      } catch (error) {
+        console.error('Error fetching supplements:', error);
+        throw error;
+      }
     },
   });
 
   const createSupplement = useMutation({
     mutationFn: async (data: InsertSupplement) => {
-      const response = await fetch("/api/supplements", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error("Failed to create supplement");
-      return response.json();
+      try {
+        // Format reminder time if enabled
+        if (data.reminderEnabled && data.reminderTime) {
+          data.reminderTime = new Date(data.reminderTime);
+        } else {
+          data.reminderTime = null;
+        }
+
+        const response = await fetch("/api/supplements", {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify(data),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Failed to create supplement:', errorText);
+          throw new Error(errorText || "Failed to create supplement");
+        }
+
+        const result = await response.json();
+        console.log('Created supplement:', result);
+        return result;
+      } catch (error) {
+        console.error('Error creating supplement:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["supplements"] });
@@ -48,6 +83,13 @@ export default function SupplementTracker() {
       toast({
         title: "Success",
         description: "Supplement added successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to add supplement",
       });
     },
   });
@@ -115,7 +157,19 @@ export default function SupplementTracker() {
                   </FormItem>
                 )}
               />
-              <Button type="submit">Add Supplement</Button>
+              <Button 
+                type="submit" 
+                disabled={createSupplement.isPending}
+              >
+                {createSupplement.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Adding...
+                  </>
+                ) : (
+                  "Add Supplement"
+                )}
+              </Button>
             </form>
           </Form>
         </CardContent>
