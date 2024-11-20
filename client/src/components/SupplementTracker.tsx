@@ -26,7 +26,7 @@ export default function SupplementTracker() {
   const form = useForm<InsertSupplement>({
     resolver: zodResolver(insertSupplementSchema),
     defaultValues,
-    mode: "onTouched"
+    mode: "onChange"
   });
 
   const { data: supplements, isLoading: isLoadingSupplements, error: supplementsError } = useQuery({
@@ -111,7 +111,14 @@ export default function SupplementTracker() {
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit((data) => {
-                createSupplement.mutate(data);
+                console.log('Submitting supplement:', data);
+                const supplementData = {
+                  ...data,
+                  reminderEnabled: data.reminderEnabled || false,
+                  reminderTime: data.reminderTime || null,
+                  notes: data.notes || ''
+                };
+                createSupplement.mutate(supplementData);
               })}
               className="space-y-4"
             >
@@ -124,7 +131,7 @@ export default function SupplementTracker() {
                     <FormControl>
                       <Input {...field} placeholder="Enter supplement name" />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-red-500" />
                   </FormItem>
                 )}
               />
@@ -137,7 +144,7 @@ export default function SupplementTracker() {
                     <FormControl>
                       <Input {...field} placeholder="e.g., 500mg" />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-red-500" />
                     <p className="text-sm text-muted-foreground">
                       Specify amount per dose (e.g., 500mg, 1 tablet)
                     </p>
@@ -153,7 +160,7 @@ export default function SupplementTracker() {
                     <FormControl>
                       <Input {...field} placeholder="e.g., Once daily with meals" />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-red-500" />
                     <p className="text-sm text-muted-foreground">
                       Specify how often to take this supplement
                     </p>
@@ -199,8 +206,11 @@ export default function SupplementTracker() {
           <CardTitle>My Supplements</CardTitle>
         </CardHeader>
         <CardContent>
-          {createSupplement.isPending ? (
-            <p className="text-center py-4">Loading supplements...</p>
+          {isLoadingSupplements || createSupplement.isPending ? (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="h-6 w-6 animate-spin" />
+              <span className="ml-2">Loading...</span>
+            </div>
           ) : supplementsError ? (
             <div className="text-center py-4 text-destructive">
               Error loading supplements: {supplementsError.message}
