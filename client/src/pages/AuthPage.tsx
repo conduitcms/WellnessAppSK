@@ -7,7 +7,16 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "../hooks/use-user";
-import { insertUserSchema, type InsertUser } from "@db/schema";
+import { insertUserSchema } from "@db/schema";
+
+interface AuthFormValues {
+  username: string;
+  email: string;
+  password: string;
+  name: string;
+  dateOfBirth: Date | null;
+  goals: string[];
+}
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -15,7 +24,7 @@ export default function AuthPage() {
   const { toast } = useToast();
 
   const [showPasswordReset, setShowPasswordReset] = useState(false);
-  const form = useForm<InsertUser>({
+  const form = useForm({
     resolver: zodResolver(insertUserSchema),
     defaultValues: {
       username: "",
@@ -23,8 +32,8 @@ export default function AuthPage() {
       password: "",
       name: "",
       dateOfBirth: null,
-      goals: [] as any[],
-    },
+      goals: [],
+    } as AuthFormValues,
   });
 
   async function onSubmit(data: InsertUser) {

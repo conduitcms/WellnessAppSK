@@ -108,8 +108,8 @@ export default function SupplementTracker() {
                     <FormLabel>Enable Reminders</FormLabel>
                     <FormControl>
                       <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
+                        checked={!!field.value}
+                        onCheckedChange={(checked) => field.onChange(checked)}
                       />
                     </FormControl>
                   </FormItem>

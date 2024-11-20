@@ -53,6 +53,8 @@ export function setupAuth(app: Express) {
     saveUninitialized: false,
     cookie: {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      httpOnly: true,
+      sameSite: 'lax',
     },
     store: new MemoryStore({
       checkPeriod: 86400000, // prune expired entries every 24h
@@ -108,17 +110,22 @@ export function setupAuth(app: Express) {
     })
   );
 
-  passport.serializeUser((user, done) => {
-    done(null, user.id);
+  passport.serializeUser((user: Express.User, done) => {
+    done(null, { id: user.id, username: user.username });
   });
 
-  passport.deserializeUser(async (id: number, done) => {
+  passport.deserializeUser(async (serialized: { id: number, username: string }, done) => {
     try {
       const [user] = await db
         .select()
         .from(users)
-        .where(eq(users.id, id))
+        .where(eq(users.id, serialized.id))
         .limit(1);
+      
+      if (!user) {
+        return done(new Error('User not found'));
+      }
+      
       done(null, user);
     } catch (err) {
       done(err);
