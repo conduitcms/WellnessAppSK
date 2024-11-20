@@ -5,10 +5,13 @@ import { z } from "zod";
 export const users = pgTable("users", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   username: text("username").unique().notNull(),
+  email: text("email").unique().notNull(),
   password: text("password").notNull(),
   name: text("name"),
   dateOfBirth: timestamp("date_of_birth"),
-  goals: json("goals").default([])
+  goals: json("goals").default([]),
+  resetToken: text("reset_token").unique(),
+  resetTokenExpiry: timestamp("reset_token_expiry")
 });
 
 export const symptoms = pgTable("symptoms", {
@@ -42,16 +45,21 @@ export const healthMetrics = pgTable("health_metrics", {
 });
 
 // Zod Schemas
-export const insertUserSchema = createInsertSchema(users);
+export const insertUserSchema = createInsertSchema(users, {
+  email: (schema) => schema.email.email("Invalid email format")
+});
 export const selectUserSchema = createSelectSchema(users);
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export interface User {
   id: number;
   username: string;
+  email: string;
   password: string;
   name?: string | null;
   dateOfBirth?: Date | null;
   goals?: any[];
+  resetToken?: string | null;
+  resetTokenExpiry?: Date | null;
 }
 export type SelectUser = z.infer<typeof selectUserSchema>;
 

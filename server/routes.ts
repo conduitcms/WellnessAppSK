@@ -10,7 +10,9 @@ export function registerRoutes(app: Express) {
   // Auth routes
   app.post("/api/register", async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { username, password } = req.body;
+      const { username, email, password, name } = req.body;
+      
+      // Check for existing username or email
       const [existingUser] = await db
         .select()
         .from(users)
@@ -21,12 +23,24 @@ export function registerRoutes(app: Express) {
         return res.status(400).send("Username already exists");
       }
 
+      const [existingEmail] = await db
+        .select()
+        .from(users)
+        .where(eq(users.email, email))
+        .limit(1);
+
+      if (existingEmail) {
+        return res.status(400).send("Email already exists");
+      }
+
       const hashedPassword = await crypto.hash(password);
       const [user] = await db
         .insert(users)
         .values({
           username,
+          email,
           password: hashedPassword,
+          name,
         })
         .returning();
 
@@ -36,6 +50,68 @@ export function registerRoutes(app: Express) {
       });
     } catch (error) {
       next(error);
+    }
+  });
+
+  app.post("/api/reset-password-request", async (req: Request, res: Response) => {
+    try {
+      const { email } = req.body;
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.email, email))
+        .limit(1);
+
+      if (!user) {
+        return res.status(404).send("User not found");
+      }
+
+      const resetToken = crypto.randomBytes(32).toString("hex");
+      const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour from now
+
+      await db
+        .update(users)
+        .set({
+          resetToken,
+          resetTokenExpiry,
+        })
+        .where(eq(users.id, user.id));
+
+      // Send reset email using SendGrid (implement this)
+      // TODO: Implement email sending
+
+      res.json({ message: "Password reset email sent" });
+    } catch (error) {
+      res.status(500).send("Error processing password reset request");
+    }
+  });
+
+  app.post("/api/reset-password", async (req: Request, res: Response) => {
+    try {
+      const { token, newPassword } = req.body;
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.resetToken, token))
+        .limit(1);
+
+      if (!user || !user.resetTokenExpiry || user.resetTokenExpiry < new Date()) {
+        return res.status(400).send("Invalid or expired reset token");
+      }
+
+      const hashedPassword = await crypto.hash(newPassword);
+      await db
+        .update(users)
+        .set({
+          password: hashedPassword,
+          resetToken: null,
+          resetTokenExpiry: null,
+        })
+        .where(eq(users.id, user.id));
+
+      res.json({ message: "Password reset successful" });
+    } catch (error) {
+      res.status(500).send("Error resetting password");
     }
   });
 

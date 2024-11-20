@@ -14,11 +14,14 @@ export default function AuthPage() {
   const { login, register } = useUser();
   const { toast } = useToast();
 
+  const [showPasswordReset, setShowPasswordReset] = useState(false);
   const form = useForm<InsertUser>({
     resolver: zodResolver(insertUserSchema),
     defaultValues: {
       username: "",
+      email: "",
       password: "",
+      name: "",
     },
   });
 
@@ -68,6 +71,36 @@ export default function AuthPage() {
                   </FormItem>
                 )}
               />
+              {!isLogin && (
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input type="email" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+              {!isLogin && (
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Full Name</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
               <FormField
                 control={form.control}
                 name="password"
@@ -82,6 +115,16 @@ export default function AuthPage() {
                 )}
               />
               <div className="flex flex-col space-y-2">
+                {isLogin && (
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="px-0 font-normal"
+                    onClick={() => setShowPasswordReset(true)}
+                  >
+                    Forgot password?
+                  </Button>
+                )}
                 <Button type="submit">
                   {isLogin ? "Sign In" : "Create Account"}
                 </Button>
