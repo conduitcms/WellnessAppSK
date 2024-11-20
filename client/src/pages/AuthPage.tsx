@@ -7,15 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "../hooks/use-user";
-import { insertUserSchema } from "@db/schema";
+import { insertUserSchema, type InsertUser } from "@db/schema";
 
-interface AuthFormValues {
-  username: string;
-  email: string;
-  password: string;
-  name: string;
-  dateOfBirth: Date | null;
-  goals: string[];
+interface AuthFormValues extends InsertUser {
+  // Additional form-specific fields can be added here if needed
 }
 
 export default function AuthPage() {
@@ -24,7 +19,7 @@ export default function AuthPage() {
   const { toast } = useToast();
 
   const [showPasswordReset, setShowPasswordReset] = useState(false);
-  const form = useForm({
+  const form = useForm<AuthFormValues>({
     resolver: zodResolver(insertUserSchema),
     defaultValues: {
       username: "",
@@ -33,10 +28,10 @@ export default function AuthPage() {
       name: "",
       dateOfBirth: null,
       goals: [],
-    } as AuthFormValues,
+    },
   });
 
-  async function onSubmit(data: InsertUser) {
+  async function onSubmit(data: AuthFormValues) {
     try {
       // Only include required fields for login
       const loginData = isLogin ? {
