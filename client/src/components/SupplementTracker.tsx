@@ -107,25 +107,16 @@ export default function SupplementTracker() {
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit((data) => {
-                console.log('Submitting supplement form with data:', data);
-                createSupplement.mutate(data, {
-                  onSuccess: () => {
-                    console.log('Successfully added supplement');
-                    form.reset(defaultValues);
-                    toast({
-                      title: "Success",
-                      description: "Supplement added successfully",
-                    });
-                  },
-                  onError: (error) => {
-                    console.error('Failed to add supplement:', error);
-                    toast({
-                      variant: "destructive",
-                      title: "Error",
-                      description: error instanceof Error ? error.message : "Failed to add supplement",
-                    });
-                  }
-                });
+                console.log('Form data before submission:', data);
+                const validationResult = insertSupplementSchema.safeParse(data);
+                console.log('Validation result:', validationResult);
+                
+                if (!validationResult.success) {
+                  console.error('Validation errors:', validationResult.error);
+                  return;
+                }
+                
+                createSupplement.mutate(data);
               })}
               className="space-y-4"
             >
@@ -170,6 +161,7 @@ export default function SupplementTracker() {
                     <p className="text-sm text-muted-foreground">
                       Specify how often to take this supplement
                     </p>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -190,7 +182,8 @@ export default function SupplementTracker() {
               />
               <Button 
                 type="submit" 
-                disabled={createSupplement.isPending}
+                disabled={createSupplement.isPending || form.formState.isSubmitting}
+                className="w-full"
               >
                 {createSupplement.isPending ? (
                   <>
