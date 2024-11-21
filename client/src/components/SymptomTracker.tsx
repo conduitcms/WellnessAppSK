@@ -13,6 +13,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { cn } from "@/lib/utils";
+import "@/styles/datepicker.css";
 
 // Simplified form data interface
 const SYMPTOM_CATEGORIES = [
@@ -279,14 +281,31 @@ export default function SymptomTracker(): ReactElement {
                 control={form.control}
                 name="date"
                 render={({ field }: { field: ControllerRenderProps<SymptomFormData, "date"> }) => (
-                  <FormItem>
+                  <FormItem className="flex flex-col">
                     <FormLabel>Date</FormLabel>
                     <FormControl>
-                      <DatePicker
-                        selected={new Date(field.value)}
-                        onChange={(date: Date | null) => field.onChange(date ? date.toISOString() : new Date().toISOString())}
-                        dateFormat="yyyy-MM-dd"
-                      />
+                      <div className="relative">
+                        <DatePicker
+                          selected={field.value ? new Date(field.value) : new Date()}
+                          onChange={(date: Date) => field.onChange(date.toISOString())}
+                          dateFormat="yyyy-MM-dd"
+                          className={cn(
+                            "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+                            "dark:bg-gray-950 dark:text-gray-50"
+                          )}
+                          wrapperClassName="w-full"
+                          showPopperArrow={false}
+                          popperClassName="dark:bg-gray-950 dark:text-gray-50"
+                          calendarClassName="dark:bg-gray-950 dark:text-gray-50 !bg-background"
+                          customInput={
+                            <Input
+                              value={field.value ? new Date(field.value).toLocaleDateString() : ''}
+                              onChange={() => {}}
+                              placeholder="Select a date"
+                            />
+                          }
+                        />
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
