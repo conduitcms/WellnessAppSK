@@ -157,6 +157,8 @@ export default function SupplementTracker(): ReactElement {
   // Mutation for taking supplements
   const { mutate: takeSupplement } = useMutation({
     mutationFn: async (supplementId: number) => {
+      console.log('Taking supplement with ID:', supplementId);
+      
       const response = await fetch(`/api/supplements/${supplementId}/take`, {
         method: "POST",
         headers: {
@@ -166,37 +168,47 @@ export default function SupplementTracker(): ReactElement {
         credentials: "include",
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        let errorMessage: string;
-        
-        try {
-          const errorData = JSON.parse(errorText);
-          errorMessage = errorData.message || errorData.error || "Failed to mark supplement as taken";
-        } catch (e) {
-          errorMessage = errorText || response.statusText || "Failed to mark supplement as taken";
-        }
-        
-        throw new Error(errorMessage);
-      }
-
+      console.log('Response status:', response.status);
       const responseText = await response.text();
-      if (!responseText) {
-        throw new Error("Empty response from server");
+      console.log('Raw response:', responseText);
+
+      if (!response.ok) {
+        throw new Error(`Failed to mark supplement as taken: ${responseText}`);
       }
 
       try {
-        const data = JSON.parse(responseText);
-        if (!data || typeof data !== 'object') {
-          throw new Error("Invalid response format");
+        // Handle empty response
+        if (!responseText.trim()) {
+          // If the server sends an empty response, we'll fetch the updated supplement
+          const updatedSupp = await fetch(`/api/supplements/${supplementId}`, {
+            credentials: "include",
+          }).then(r => r.json());
+          return updatedSupp;
         }
-        return data as Supplement;
+
+        // Try to parse the response as JSON
+        const data = JSON.parse(responseText);
+        
+        // If we got an object with an id, assume it's a valid supplement
+        if (data && typeof data === 'object' && 'id' in data) {
+          return data as Supplement;
+        }
+        
+        // If we got a success message but no data, fetch the latest supplement
+        const updatedSupp = await fetch(`/api/supplements/${supplementId}`, {
+          credentials: "include",
+        }).then(r => r.json());
+        return updatedSupp;
+        
       } catch (e) {
-        console.error("Error parsing response:", e, "Response text:", responseText);
-        throw new Error("Invalid response format from server");
+        console.error("Error parsing response:", e);
+        console.error("Response text was:", responseText);
+        throw new Error("Invalid response format from server. Please try again.");
       }
     },
     onSuccess: (updatedSupplement: Supplement) => {
+      console.log('Successfully updated supplement:', updatedSupplement);
+      
       queryClient.setQueryData<Supplement[]>(["supplements"], (old = []) => {
         return old.map(supplement => 
           supplement.id === updatedSupplement.id ? updatedSupplement : supplement
