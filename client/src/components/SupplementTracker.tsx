@@ -50,6 +50,7 @@ export default function SupplementTracker() {
 
   const createSupplement = useMutation({
     mutationFn: async (data: InsertSupplement) => {
+      console.log('Sending supplement data:', data);
       const response = await fetch("/api/supplements", {
         method: "POST",
         headers: {
@@ -59,11 +60,14 @@ export default function SupplementTracker() {
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || "Failed to create supplement");
+        const errorData = await response.text();
+        console.error('Server error:', errorData);
+        throw new Error(errorData || "Failed to create supplement");
       }
 
-      return response.json();
+      const result = await response.json();
+      console.log('Server response:', result);
+      return result;
     },
     onSuccess: (data) => {
       console.log('Successfully created supplement:', data);
@@ -75,11 +79,11 @@ export default function SupplementTracker() {
       });
     },
     onError: (error: Error) => {
-      console.error('Supplement creation failed:', error);
+      console.error('Failed to create supplement:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to add supplement. Please check all required fields."
+        description: error.message || "Failed to add supplement"
       });
     },
   });
@@ -94,8 +98,15 @@ export default function SupplementTracker() {
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit((data) => {
-                console.log('Submitting supplement:', data);
-                createSupplement.mutate(data);
+                const supplementData = {
+                  ...data,
+                  reminderEnabled: data.reminderEnabled || false,
+                  reminderTime: data.reminderTime || null,
+                  notes: data.notes || ""
+                };
+                
+                console.log('Form data before submission:', supplementData);
+                createSupplement.mutate(supplementData);
               })}
               className="space-y-4"
             >
