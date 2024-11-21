@@ -56,9 +56,9 @@ export default function SupplementTracker() {
         console.log('=== Starting supplement creation ===');
         console.log('Form data:', data);
         
-        // Validate data before sending
-        if (!data.name || !data.dosage || !data.frequency) {
-          throw new Error('Required fields missing');
+        // Validate required fields
+        if (!data.name?.trim() || !data.dosage?.trim() || !data.frequency?.trim()) {
+          throw new Error('Please fill in all required fields');
         }
         
         console.log('Sending request to server');
@@ -74,32 +74,41 @@ export default function SupplementTracker() {
 
         console.log('Server response status:', response.status);
         
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (e) {
+          errorData = { message: 'Unable to parse server response' };
+        }
+        
         if (!response.ok) {
-          const errorText = await response.text();
           console.error('Server error response:', {
             status: response.status,
             statusText: response.statusText,
-            body: errorText
+            data: errorData
           });
           
-          // Handle specific error cases
-          if (response.status === 401) {
-            throw new Error('Authentication required. Please log in again.');
+          // Handle specific status codes
+          switch (response.status) {
+            case 401:
+              throw new Error('Authentication required. Please log in again.');
+            case 409:
+              throw new Error('A supplement with this name already exists.');
+            case 400:
+              throw new Error(errorData.message || 'Invalid supplement data');
+            case 500:
+              throw new Error('Server error. Please try again later.');
+            default:
+              throw new Error(errorData.message || `Server error: ${response.status}`);
           }
-          
-          throw new Error(errorText || `Server error: ${response.status}`);
         }
 
-        const result = await response.json();
-        console.log('Parsed server response:', result);
-        
-        // Validate response data
-        if (!result.id || !result.name) {
-          console.error('Invalid response format:', result);
+        if (!errorData.id || !errorData.name) {
+          console.error('Invalid response format:', errorData);
           throw new Error('Invalid server response format');
         }
 
-        return result;
+        return errorData;
       } catch (error) {
         console.error('Error in supplement creation:', error);
         throw error;
