@@ -12,22 +12,27 @@ import { useToast } from "@/hooks/use-toast";
 import { insertSupplementSchema, type InsertSupplement, type Supplement } from "@db/schema";
 import type { ReactElement } from "react";
 
-// Simplified form data interface
-type SupplementFormData = {
-  name: string;
-  dosage: string;
-  frequency: string;
-  reminderEnabled: boolean;
-  reminderTime: string | null;
-  notes: string;
-};
+import { z } from "zod";
+
+// Zod schema for form validation
+const supplementFormSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  dosage: z.string().min(1, "Dosage is required"),
+  frequency: z.string().min(1, "Frequency is required"),
+  reminderEnabled: z.boolean(),
+  reminderTime: z.string().nullable(),
+  notes: z.string().optional()
+});
+
+type SupplementFormData = z.infer<typeof supplementFormSchema>;
 
 export default function SupplementTracker(): ReactElement {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Simplified form setup
+  // Form setup with zod validation
   const form = useForm<SupplementFormData>({
+    resolver: zodResolver(supplementFormSchema),
     defaultValues: {
       name: "",
       dosage: "",
