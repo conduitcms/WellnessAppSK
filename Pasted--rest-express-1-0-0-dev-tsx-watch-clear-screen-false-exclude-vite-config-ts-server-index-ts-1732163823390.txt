@@ -1,0 +1,163 @@
+> rest-express@1.0.0 dev
+> tsx watch --clear-screen=false --exclude vite.config.ts.* server/index.ts
+
+04:36:11 AM [express] serving on port 5000
+04:36:14 AM [express] GET /api/user 401 in 2ms
+Auth check - isAuthenticated: false
+Attempting to find test account
+Successfully logged in test account: 1
+Fetching supplements for user: 1
+Found 1 supplements for user 1
+04:36:14 AM [express] GET /api/supplements 200 in 51ms :: [{"id":2,"userId":1,"name":"test","dosage":…
+04:36:14 AM [express] GET /api/user 401 in 0ms
+Auth check - isAuthenticated: false
+Attempting to find test account
+Successfully logged in test account: 1
+Fetching supplements for user: 1
+Found 1 supplements for user 1
+04:36:14 AM [express] GET /api/supplements 304 in 48ms :: [{"id":2,"userId":1,"name":"test","dosage":…
+
+ ERROR(TypeScript)  Argument of type '{ date: Date; category: SymptomCategory; severity: number; description: string; }' is not assignable to parameter of type 'SymptomFormData'.
+  Types of property 'date' are incompatible.
+    Type 'Date' is not assignable to type 'string'.
+ FILE  /home/runner/WomensWellnessApp/client/src/components/SymptomTracker.tsx:167:19
+
+    165 |       date: new Date(data.date)
+    166 |     };
+  > 167 |     createSymptom(submissionData);
+        |                   ^^^^^^^^^^^^^^
+    168 |   };
+    169 |
+    170 |   return (
+
+[TypeScript] Found 1 error. Watching for file changes.
+Auth check - isAuthenticated: true
+User authenticated: { userId: 1 }
+04:36:20 AM [express] DELETE /api/supplements/2 200 in 91ms :: {"message":"Supplement deleted success…
+04:36:23 AM [express] GET /api/user 304 in 24ms :: {"id":1,"username":"testuser","email":"test@exampl…
+Auth check - isAuthenticated: true
+User authenticated: { userId: 1 }
+Fetching supplements for user: 1
+Found 0 supplements for user 1
+No supplements found for user: 1
+04:36:23 AM [express] GET /api/supplements 200 in 65ms :: []
+Auth check - isAuthenticated: true
+User authenticated: { userId: 1 }
+04:36:27 AM [express] GET /api/symptoms 200 in 69ms :: []
+Auth check - isAuthenticated: true
+User authenticated: { userId: 1 }
+Symptom validation failed: ZodError: [
+  {
+    "code": "invalid_type",
+    "expected": "date",
+    "received": "string",
+    "path": [
+      "date"
+    ],
+    "message": "Expected date, received string"
+  }
+]
+    at get error [as error] (file:///home/runner/WomensWellnessApp/node_modules/zod/lib/index.mjs:587:31)
+    at <anonymous> (/home/runner/WomensWellnessApp/server/routes.ts:225:60)
+    at Layer.handle [as handle_request] (/home/runner/WomensWellnessApp/node_modules/express/lib/router/layer.js:95:5)
+    at next (/home/runner/WomensWellnessApp/node_modules/express/lib/router/route.js:149:13)
+    at ensureAuth (/home/runner/WomensWellnessApp/server/routes.ts:162:16)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+  issues: [
+    {
+      code: 'invalid_type',
+      expected: 'date',
+      received: 'string',
+      path: [Array],
+      message: 'Expected date, received string'
+    }
+  ],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)],
+  errors: [
+    {
+      code: 'invalid_type',
+      expected: 'date',
+      received: 'string',
+      path: [Array],
+      message: 'Expected date, received string'
+    }
+  ]
+}
+04:36:34 AM [express] POST /api/symptoms 400 in 50ms :: {"message":"Invalid symptom data","errors":[{…
+Auth check - isAuthenticated: true
+User authenticated: { userId: 1 }
+=== Starting supplement creation process ===
+Request body: {
+  name: '',
+  dosage: '',
+  frequency: '',
+  reminderEnabled: false,
+  notes: ''
+}
+User ID: 1
+Prepared supplement data: {
+  name: '',
+  dosage: '',
+  frequency: '',
+  reminderEnabled: false,
+  notes: '',
+  userId: 1
+}
+Schema validation passed
+Starting database transaction
+Starting supplement insertion with data: {
+  "userId": 1,
+  "name": "",
+  "dosage": "",
+  "frequency": "",
+  "reminderEnabled": false,
+  "notes": ""
+}
+Insert operation completed, result: {
+  "id": 3,
+  "userId": 1,
+  "name": "",
+  "dosage": "",
+  "frequency": "",
+  "reminderEnabled": false,
+  "reminderTime": null,
+  "notes": "",
+  "imageUrl": null,
+  "createdAt": "2024-11-21T04:36:51.983Z",
+  "updatedAt": "2024-11-21T04:36:51.983Z"
+}
+Verifying supplement insertion with ID: 3
+Supplement verification successful: {
+  "id": 3,
+  "userId": 1,
+  "name": "",
+  "dosage": "",
+  "frequency": "",
+  "reminderEnabled": false,
+  "reminderTime": null,
+  "notes": "",
+  "imageUrl": null,
+  "createdAt": "2024-11-21T04:36:51.983Z",
+  "updatedAt": "2024-11-21T04:36:51.983Z"
+}
+Total supplements for user 1 after insert: 1
+Transaction completed successfully: {
+  id: 3,
+  userId: 1,
+  name: '',
+  dosage: '',
+  frequency: '',
+  reminderEnabled: false,
+  reminderTime: null,
+  notes: '',
+  imageUrl: null,
+  createdAt: 2024-11-21T04:36:51.983Z,
+  updatedAt: 2024-11-21T04:36:51.983Z
+}
+04:36:52 AM [express] POST /api/supplements 200 in 277ms :: {"id":3,"name":"","dosage":"","frequency"…
+Auth check - isAuthenticated: true
+User authenticated: { userId: 1 }
+Fetching supplements for user: 1
+Found 1 supplements for user 1
+04:36:52 AM [express] GET /api/supplements 200 in 69ms :: [{"id":3,"userId":1,"name":"","dosage":"","…
