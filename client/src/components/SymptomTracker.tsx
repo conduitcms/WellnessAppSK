@@ -36,7 +36,9 @@ export default function SymptomTracker() {
     queryKey: ["symptoms"],
     queryFn: async () => {
       try {
-        const response = await fetch("/api/symptoms");
+        const response = await fetch("/api/symptoms", {
+          credentials: "include"
+        });
         if (!response.ok) {
           console.error('Failed to fetch symptoms:', await response.text());
           throw new Error("Failed to fetch symptoms");
@@ -61,6 +63,7 @@ export default function SymptomTracker() {
 
         const response = await fetch("/api/symptoms", {
           method: "POST",
+          credentials: "include",
           headers: { 
             "Content-Type": "application/json",
             "Accept": "application/json"

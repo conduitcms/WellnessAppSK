@@ -33,7 +33,9 @@ export default function SupplementTracker() {
     queryKey: ["supplements"],
     queryFn: async () => {
       try {
-        const response = await fetch("/api/supplements");
+        const response = await fetch("/api/supplements", {
+          credentials: "include"
+        });
         if (!response.ok) {
           console.error('Failed to fetch supplements:', await response.text());
           throw new Error("Failed to fetch supplements");
@@ -53,8 +55,10 @@ export default function SupplementTracker() {
       console.log('Sending supplement data:', data);
       const response = await fetch("/api/supplements", {
         method: "POST",
+        credentials: "include",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "Accept": "application/json"
         },
         body: JSON.stringify(data)
       });
