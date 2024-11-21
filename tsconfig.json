@@ -18,15 +18,9 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@db/*": ["./db/*"]
-    },
-    "types": ["vite/client", "node"]
+      "@db/*": ["../../db/*"]
+    }
   },
-  "include": [
-    "src/**/*",
-    "src/types/**/*",
-    "db/**/*"
-  ],
-  "exclude": ["node_modules"],
+  "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

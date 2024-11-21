@@ -1,23 +1,23 @@
-import { pgTable, serial, text, timestamp, integer } from 'drizzle-orm/pg-core';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { z } from 'zod';
+export interface User {
+  id: string;
+  email: string;
+  name: string | null;
+  // Add other user fields as needed
+}
 
-export const symptoms = pgTable('symptoms', {
-  id: serial('id').primaryKey(),
-  userId: text('user_id').notNull(),
-  category: text('category').notNull(),
-  severity: integer('severity').notNull(),
-  description: text('description'),
-  date: text('date').notNull(),
-  mood: text('mood'),
-  moodIntensity: integer('mood_intensity'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull()
-});
+export interface Symptom {
+  id: number;
+  category: string;
+  severity: number;
+  description: string;
+  date: string;
+  mood: string;
+  moodIntensity: number;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
-// Create Zod schemas for type validation
-export const insertSymptomSchema = createInsertSchema(symptoms);
-export const selectSymptomSchema = createSelectSchema(symptoms);
-
-// Export the Symptom type
-export type Symptom = z.infer<typeof selectSymptomSchema>;
+export const users = {
+  // Add your user-related database operations here
+};
