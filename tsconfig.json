@@ -1,9 +1,8 @@
 {
-  "include": ["client/src/**/*", "db/**/*", "server/**/*"],
-  "exclude": ["node_modules", "build", "dist", "**/*.test.ts"],
   "compilerOptions": {
-    "target": "ESNext",
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
     "moduleResolution": "bundler",
@@ -18,9 +17,11 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./client/src/*"],
-      "@db/*": ["./db/*"]
+      "@/*": ["./src/*"],
+      "@db/*": ["../db/*"]
     },
-    "types": ["vite/client", "node"]
-  }
+    "types": ["react", "react-dom", "node"]
+  },
+  "include": ["src"],
+  "references": [{ "path": "./tsconfig.node.json" }]
 }

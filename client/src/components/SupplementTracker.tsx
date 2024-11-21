@@ -9,22 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import type { Supplement } from "@db/schema";
+import { Supplement, SupplementFormData, supplementFormSchema } from "@/types/supplement";
 import type { ReactElement } from "react";
-
-import { z } from "zod";
-
-// Zod schema for form validation
-const supplementFormSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  dosage: z.string().min(1, "Dosage is required"),
-  frequency: z.string().min(1, "Frequency is required"),
-  reminderEnabled: z.boolean(),
-  reminderTime: z.string().nullable(),
-  notes: z.string().optional()
-});
-
-type SupplementFormData = z.infer<typeof supplementFormSchema>;
 
 export default function SupplementTracker(): ReactElement {
   const { toast } = useToast();
@@ -47,68 +33,53 @@ export default function SupplementTracker(): ReactElement {
   const { 
     data: supplements = [], 
     isLoading: isLoadingSupplements 
-  } = useQuery({
+  } = useQuery<Supplement[]>({
     queryKey: ["supplements"],
     queryFn: async () => {
-      try {
-        const response = await fetch("/api/supplements", {
-          credentials: "include"
-        });
-        
-        if (!response.ok) {
-          throw new Error("Failed to fetch supplements");
-        }
-
-        const data = await response.json();
-        console.log("Fetched supplements:", data);
-        return data as Supplement[];
-      } catch (error) {
-        console.error("Error fetching supplements:", error);
-        throw error;
+      const response = await fetch("/api/supplements", {
+        credentials: "include"
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch supplements");
       }
+
+      return response.json();
     }
   });
 
   // Mutation for creating supplements
-  const { mutate: createSupplement, isPending } = useMutation({
-    mutationFn: async (data: SupplementFormData) => {
-      try {
-        console.log("Sending supplement data:", data);
-        const response = await fetch("/api/supplements", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify(data),
-        });
+  const { mutate: createSupplement, isPending } = useMutation<
+    Supplement,
+    Error,
+    SupplementFormData
+  >({
+    mutationFn: async (data) => {
+      const response = await fetch("/api/supplements", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(data),
+      });
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || "Failed to create supplement");
-        }
-
-        return response.json();
-      } catch (error) {
-        console.error("Error creating supplement:", error);
-        throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to create supplement");
       }
+
+      return response.json();
     },
     onSuccess: (newSupplement) => {
-      // Update the cache with the new supplement
       queryClient.setQueryData<Supplement[]>(["supplements"], (old = []) => {
         return [...old, newSupplement];
       });
-
-      // Reset form
       form.reset();
-
       toast({
         title: "Success",
         description: "Supplement added successfully",
       });
-
-      // Force a refresh of the supplements list
       queryClient.invalidateQueries({ queryKey: ["supplements"] });
     },
     onError: (error: Error) => {
@@ -120,9 +91,13 @@ export default function SupplementTracker(): ReactElement {
     },
   });
 
-  // Add delete mutation
-  const { mutate: deleteSupplement } = useMutation({
-    mutationFn: async (supplementId: number) => {
+  // Delete mutation with proper types
+  const { mutate: deleteSupplement } = useMutation<
+    number,
+    Error,
+    number
+  >({
+    mutationFn: async (supplementId) => {
       const response = await fetch(`/api/supplements/${supplementId}`, {
         method: "DELETE",
         credentials: "include",
@@ -135,7 +110,6 @@ export default function SupplementTracker(): ReactElement {
       return supplementId;
     },
     onSuccess: (deletedSupplementId) => {
-      // Update cache by removing the deleted supplement
       queryClient.setQueryData<Supplement[]>(["supplements"], (old = []) => {
         return old.filter(supplement => supplement.id !== deletedSupplementId);
       });
@@ -154,11 +128,13 @@ export default function SupplementTracker(): ReactElement {
     },
   });
 
-  // Mutation for taking supplements
-  const { mutate: takeSupplement } = useMutation({
-    mutationFn: async (supplementId: number) => {
-      console.log('Taking supplement with ID:', supplementId);
-      
+  // Take supplement mutation with proper types
+  const { mutate: takeSupplement } = useMutation<
+    Supplement,
+    Error,
+    number
+  >({
+    mutationFn: async (supplementId) => {
       const response = await fetch(`/api/supplements/${supplementId}/take`, {
         method: "POST",
         headers: {
@@ -168,47 +144,13 @@ export default function SupplementTracker(): ReactElement {
         credentials: "include",
       });
 
-      console.log('Response status:', response.status);
-      const responseText = await response.text();
-      console.log('Raw response:', responseText);
-
       if (!response.ok) {
-        throw new Error(`Failed to mark supplement as taken: ${responseText}`);
+        throw new Error(`Failed to mark supplement as taken: ${response.statusText}`);
       }
 
-      try {
-        // Handle empty response
-        if (!responseText.trim()) {
-          // If the server sends an empty response, we'll fetch the updated supplement
-          const updatedSupp = await fetch(`/api/supplements/${supplementId}`, {
-            credentials: "include",
-          }).then(r => r.json());
-          return updatedSupp;
-        }
-
-        // Try to parse the response as JSON
-        const data = JSON.parse(responseText);
-        
-        // If we got an object with an id, assume it's a valid supplement
-        if (data && typeof data === 'object' && 'id' in data) {
-          return data as Supplement;
-        }
-        
-        // If we got a success message but no data, fetch the latest supplement
-        const updatedSupp = await fetch(`/api/supplements/${supplementId}`, {
-          credentials: "include",
-        }).then(r => r.json());
-        return updatedSupp;
-        
-      } catch (e) {
-        console.error("Error parsing response:", e);
-        console.error("Response text was:", responseText);
-        throw new Error("Invalid response format from server. Please try again.");
-      }
+      return response.json();
     },
-    onSuccess: (updatedSupplement: Supplement) => {
-      console.log('Successfully updated supplement:', updatedSupplement);
-      
+    onSuccess: (updatedSupplement) => {
       queryClient.setQueryData<Supplement[]>(["supplements"], (old = []) => {
         return old.map(supplement => 
           supplement.id === updatedSupplement.id ? updatedSupplement : supplement
@@ -221,7 +163,6 @@ export default function SupplementTracker(): ReactElement {
       });
     },
     onError: (error: Error) => {
-      console.error("Error taking supplement:", error);
       toast({
         variant: "destructive",
         title: "Error",
