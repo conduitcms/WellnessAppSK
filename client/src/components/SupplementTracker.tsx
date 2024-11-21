@@ -29,7 +29,7 @@ export default function SupplementTracker() {
     mode: "onBlur" // Show errors when field loses focus
   });
 
-  const { data: supplements, isLoading: isLoadingSupplements, error: supplementsError } = useQuery({
+  const { data: supplements = [], isLoading: isLoadingSupplements, error: supplementsError } = useQuery<any[]>({
     queryKey: ["supplements"],
     queryFn: async () => {
       try {
@@ -121,8 +121,10 @@ export default function SupplementTracker() {
       // Reset form
       form.reset();
       
-      // Invalidate and refetch supplements
-      console.log('Invalidating supplements query');
+      // Update cache with new supplement
+      queryClient.setQueryData(["supplements"], (old: any[] = []) => [...old, data]);
+      
+      // Then invalidate to ensure fresh data
       queryClient.invalidateQueries({ queryKey: ["supplements"] });
       
       toast({
@@ -272,7 +274,8 @@ export default function SupplementTracker() {
             </div>
           ) : (
             <div className="space-y-4">
-              {supplements?.map((supplement: any) => (
+              {supplements?.length > 0 ? (
+                supplements.map((supplement: any) => (
                 <div
                   key={supplement.id}
                   className="p-4 border rounded-lg space-y-2"
@@ -304,7 +307,12 @@ export default function SupplementTracker() {
                     </span>
                   </div>
                 </div>
-              ))}
+              ))
+              ) : (
+                <div className="text-center py-4 text-gray-400">
+                  No supplements added yet
+                </div>
+              )}
             </div>
           )}
         </CardContent>
