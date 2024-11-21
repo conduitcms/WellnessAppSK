@@ -21,6 +21,6 @@
       "@/*": ["./client/src/*"],
       "@db/*": ["./db/*"]
     },
-    "types": ["vite/client", "node"]
+    "types": ["vite/client", "node", "react", "react-dom"]
   }
 }

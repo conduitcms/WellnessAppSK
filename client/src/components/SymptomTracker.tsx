@@ -14,6 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import type { ControllerRenderProps } from "react-hook-form";
 
 // Simplified form data interface
 const SYMPTOM_CATEGORIES = [
@@ -129,7 +130,7 @@ export default function SymptomTracker(): ReactElement {
         throw error;
       }
     },
-    onSuccess: (newSymptom) => {
+    onSuccess: (newSymptom: Symptom) => {
       // Update the cache with the new symptom
       queryClient.setQueryData<Symptom[]>(["symptoms"], (old = []) => {
         return [...old, newSymptom];
@@ -169,7 +170,7 @@ export default function SymptomTracker(): ReactElement {
 
       return symptomId;
     },
-    onSuccess: (deletedSymptomId) => {
+    onSuccess: (deletedSymptomId: number) => {
       // Update cache by removing the deleted symptom
       queryClient.setQueryData<Symptom[]>(["symptoms"], (old = []) => {
         return old.filter(symptom => symptom.id !== deletedSymptomId);
@@ -211,7 +212,7 @@ export default function SymptomTracker(): ReactElement {
               <FormField
                 control={form.control}
                 name="category"
-                render={({ field }) => (
+                render={({ field }: { field: ControllerRenderProps<SymptomFormData, "category"> }) => (
                   <FormItem>
                     <FormLabel>Category</FormLabel>
                     <FormControl>
@@ -234,7 +235,7 @@ export default function SymptomTracker(): ReactElement {
               <FormField
                 control={form.control}
                 name="severity"
-                render={({ field }) => (
+                render={({ field }: { field: ControllerRenderProps<SymptomFormData, "severity"> }) => (
                   <FormItem>
                     <FormLabel>Severity (1-10)</FormLabel>
                     <FormControl>
@@ -243,7 +244,7 @@ export default function SymptomTracker(): ReactElement {
                         max={10}
                         step={1}
                         value={[field.value]}
-                        onValueChange={([value]) => field.onChange(value)}
+                        onValueChange={([value]: number[]) => field.onChange(value)}
                       />
                     </FormControl>
                     <div className="text-center text-sm text-muted-foreground">
@@ -257,7 +258,7 @@ export default function SymptomTracker(): ReactElement {
               <FormField
                 control={form.control}
                 name="date"
-                render={({ field }) => (
+                render={({ field }: { field: ControllerRenderProps<SymptomFormData, "date"> }) => (
                   <FormItem>
                     <FormLabel>Date</FormLabel>
                     <FormControl>
@@ -280,7 +281,7 @@ export default function SymptomTracker(): ReactElement {
               <FormField
                 control={form.control}
                 name="mood"
-                render={({ field }) => (
+                render={({ field }: { field: ControllerRenderProps<SymptomFormData, "mood"> }) => (
                   <FormItem>
                     <FormLabel>Mood</FormLabel>
                     <FormControl>
@@ -303,7 +304,7 @@ export default function SymptomTracker(): ReactElement {
               <FormField
                 control={form.control}
                 name="moodIntensity"
-                render={({ field }) => (
+                render={({ field }: { field: ControllerRenderProps<SymptomFormData, "moodIntensity"> }) => (
                   <FormItem>
                     <FormLabel>Mood Intensity (1-10)</FormLabel>
                     <FormControl>
@@ -312,7 +313,7 @@ export default function SymptomTracker(): ReactElement {
                         max={10}
                         step={1}
                         value={[field.value]}
-                        onValueChange={([value]) => field.onChange(value)}
+                        onValueChange={([value]: number[]) => field.onChange(value)}
                       />
                     </FormControl>
                     <div className="text-center text-sm text-muted-foreground">
@@ -326,7 +327,7 @@ export default function SymptomTracker(): ReactElement {
               <FormField
                 control={form.control}
                 name="description"
-                render={({ field }) => (
+                render={({ field }: { field: ControllerRenderProps<SymptomFormData, "description"> }) => (
                   <FormItem>
                     <FormLabel>Description</FormLabel>
                     <FormControl>
