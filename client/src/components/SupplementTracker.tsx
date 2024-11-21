@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { insertSupplementSchema, type InsertSupplement, type Supplement } from "@db/schema";
+import type { Supplement } from "@db/schema";
 import type { ReactElement } from "react";
 
 import { z } from "zod";
