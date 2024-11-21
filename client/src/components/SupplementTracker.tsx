@@ -26,7 +26,7 @@ export default function SupplementTracker() {
   const form = useForm<InsertSupplement>({
     resolver: zodResolver(insertSupplementSchema),
     defaultValues,
-    mode: "onSubmit"  // Show errors on form submission
+    mode: "onBlur" // Show errors when field loses focus
   });
 
   const { data: supplements, isLoading: isLoadingSupplements, error: supplementsError } = useQuery({
@@ -50,7 +50,6 @@ export default function SupplementTracker() {
 
   const createSupplement = useMutation({
     mutationFn: async (data: InsertSupplement) => {
-      console.log('Submitting data:', data);
       const response = await fetch("/api/supplements", {
         method: "POST",
         headers: {
@@ -60,14 +59,11 @@ export default function SupplementTracker() {
       });
 
       if (!response.ok) {
-        const errorData = await response.text();
-        console.error('Submission error:', errorData);
-        throw new Error(errorData || "Failed to create supplement");
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to create supplement");
       }
 
-      const result = await response.json();
-      console.log('Server response:', result);
-      return result;
+      return response.json();
     },
     onSuccess: (data) => {
       console.log('Successfully created supplement:', data);
@@ -98,7 +94,7 @@ export default function SupplementTracker() {
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit((data) => {
-                console.log('Form data:', data);
+                console.log('Submitting supplement:', data);
                 createSupplement.mutate(data);
               })}
               className="space-y-4"
