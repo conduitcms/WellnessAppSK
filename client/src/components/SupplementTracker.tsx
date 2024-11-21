@@ -14,7 +14,7 @@ import type { ReactElement } from "react";
 
 interface SupplementFormData extends InsertSupplement {
   reminderEnabled: boolean;
-  reminderTime: string | null;
+  reminderTime: Date | null;
   notes: string;
 }
 
