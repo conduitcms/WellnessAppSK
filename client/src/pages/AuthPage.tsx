@@ -20,10 +20,9 @@ interface AuthFormValues {
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
+  const [showPasswordReset, setShowPasswordReset] = useState(false);
   const { login, register } = useUser();
   const { toast } = useToast();
-
-  // State for password reset functionality will be implemented later
   const form = useForm<AuthFormValues>({
     resolver: zodResolver(insertUserSchema),
     defaultValues: {
