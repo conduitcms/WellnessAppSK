@@ -295,23 +295,34 @@ export function registerRoutes(app: Express) {
   });
 
   app.post("/api/supplements", ensureAuth, async (req: Request, res: Response) => {
-    // Start transaction
-    const tx = db.transaction(async (tx) => {
-      try {
-        console.log('Received supplement creation request:', {
-          ...req.body,
-          userId: req.user!.id
-        });
-
+    console.log('=== Starting supplement creation process ===');
+    console.log('Request body:', req.body);
+    console.log('User ID:', req.user?.id);
+    
+    let transactionResult;
+    
+    try {
+      // Start transaction
+      transactionResult = await db.transaction(async (tx) => {
+        console.log('Starting database transaction');
+        
         // Verify user session is still valid
         if (!req.user || !req.user.id) {
+          console.error('Invalid user session detected');
           throw new Error('User session invalid');
         }
 
+        // Prepare supplement data
+        const supplementData = { ...req.body, userId: req.user.id };
+        console.log('Prepared supplement data:', supplementData);
+
         // Validate request body
-        const result = insertSupplementSchema.safeParse({ ...req.body, userId: req.user.id });
+        const result = insertSupplementSchema.safeParse(supplementData);
         if (!result.success) {
-          console.error('Supplement validation failed:', result.error);
+          console.error('Schema validation failed:', {
+            errors: result.error.issues,
+            data: supplementData
+          });
           return res.status(400).json({
             message: "Invalid supplement data",
             errors: result.error.issues.map(issue => ({
@@ -320,17 +331,21 @@ export function registerRoutes(app: Express) {
             }))
           });
         }
+        console.log('Schema validation passed');
 
         // Handle reminder time
         if (result.data.reminderEnabled && result.data.reminderTime) {
           result.data.reminderTime = new Date(result.data.reminderTime);
+          console.log('Processed reminder time:', result.data.reminderTime);
         }
 
-        // Insert within transaction
+        // Attempt insert within transaction
+        console.log('Attempting to insert supplement');
         const [supplement] = await tx.insert(supplements).values(result.data).returning();
-        console.log('Successfully created supplement:', supplement);
+        console.log('Initial insert successful:', supplement);
 
-        // Verify the insert was successful
+        // Verify the insert within transaction
+        console.log('Verifying insert');
         const [verifiedSupplement] = await tx
           .select()
           .from(supplements)
@@ -338,27 +353,47 @@ export function registerRoutes(app: Express) {
           .limit(1);
 
         if (!verifiedSupplement) {
+          console.error('Insert verification failed - supplement not found after insert');
           throw new Error('Supplement verification failed after insert');
         }
+        console.log('Insert verification successful');
+
+        // Log all supplements for this user to verify data consistency
+        const userSupplements = await tx
+          .select()
+          .from(supplements)
+          .where(eq(supplements.userId, req.user.id));
+        console.log(`Current user supplements count: ${userSupplements.length}`);
 
         return supplement;
-      } catch (error) {
-        console.error('Transaction error:', error);
-        throw error;
-      }
-    });
+      });
 
-    try {
-      const supplement = await tx;
-      res.json(supplement);
+      console.log('Transaction completed successfully');
+      console.log('Final supplement data:', transactionResult);
+      res.json(transactionResult);
+      
     } catch (error) {
-      console.error('Error creating supplement:', error);
+      console.error('=== Error in supplement creation ===');
+      console.error('Error details:', {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
       
       // Handle specific error types
       if (error instanceof Error && error.message === 'User session invalid') {
         return res.status(401).json({
           message: "Authentication required",
           error: "User session invalid"
+        });
+      }
+
+      // Check for database constraint violations
+      if (error instanceof Error && error.message.includes('constraint')) {
+        console.error('Database constraint violation:', error.message);
+        return res.status(400).json({
+          message: "Database constraint violation",
+          error: error.message
         });
       }
 

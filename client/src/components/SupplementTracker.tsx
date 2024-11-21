@@ -52,42 +52,95 @@ export default function SupplementTracker() {
 
   const createSupplement = useMutation({
     mutationFn: async (data: InsertSupplement) => {
-      console.log('Sending supplement data:', data);
-      const response = await fetch("/api/supplements", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-        },
-        body: JSON.stringify(data)
-      });
+      try {
+        console.log('=== Starting supplement creation ===');
+        console.log('Form data:', data);
+        
+        // Validate data before sending
+        if (!data.name || !data.dosage || !data.frequency) {
+          throw new Error('Required fields missing');
+        }
+        
+        console.log('Sending request to server');
+        const response = await fetch("/api/supplements", {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify(data)
+        });
 
-      if (!response.ok) {
-        const errorData = await response.text();
-        console.error('Server error:', errorData);
-        throw new Error(errorData || "Failed to create supplement");
+        console.log('Server response status:', response.status);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Server error response:', {
+            status: response.status,
+            statusText: response.statusText,
+            body: errorText
+          });
+          
+          // Handle specific error cases
+          if (response.status === 401) {
+            throw new Error('Authentication required. Please log in again.');
+          }
+          
+          throw new Error(errorText || `Server error: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log('Parsed server response:', result);
+        
+        // Validate response data
+        if (!result.id || !result.name) {
+          console.error('Invalid response format:', result);
+          throw new Error('Invalid server response format');
+        }
+
+        return result;
+      } catch (error) {
+        console.error('Error in supplement creation:', error);
+        throw error;
       }
-
-      const result = await response.json();
-      console.log('Server response:', result);
-      return result;
     },
     onSuccess: (data) => {
-      console.log('Successfully created supplement:', data);
+      console.log('Mutation succeeded:', data);
+      
+      // Reset form
       form.reset();
+      
+      // Invalidate and refetch supplements
+      console.log('Invalidating supplements query');
       queryClient.invalidateQueries({ queryKey: ["supplements"] });
+      
       toast({
         title: "Success",
         description: "Supplement added successfully"
       });
     },
     onError: (error: Error) => {
-      console.error('Failed to create supplement:', error);
+      console.error('Mutation failed:', error);
+      
+      // Handle specific error types
+      let errorMessage = "Failed to add supplement";
+      if (error.message.includes('Authentication required')) {
+        errorMessage = "Please log in again to continue";
+      } else if (error.message.includes('constraint')) {
+        errorMessage = "This supplement already exists";
+      }
+      
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to add supplement"
+        description: errorMessage
+      });
+      
+      // Log additional error details
+      console.error('Detailed error:', {
+        message: error.message,
+        stack: error.stack
       });
     },
   });
