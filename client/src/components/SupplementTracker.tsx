@@ -74,18 +74,18 @@ export default function SupplementTracker() {
 
         console.log('Server response status:', response.status);
         
-        let errorData;
+        let responseData;
         try {
-          errorData = await response.json();
+          responseData = await response.json();
         } catch (e) {
-          errorData = { message: 'Unable to parse server response' };
+          throw new Error('Unable to parse server response');
         }
         
         if (!response.ok) {
           console.error('Server error response:', {
             status: response.status,
             statusText: response.statusText,
-            data: errorData
+            data: responseData
           });
           
           // Handle specific status codes
@@ -95,26 +95,21 @@ export default function SupplementTracker() {
             case 409:
               throw new Error('A supplement with this name already exists.');
             case 400:
-              throw new Error(errorData.message || 'Invalid supplement data');
+              throw new Error(responseData.message || 'Invalid supplement data');
             case 500:
               throw new Error('Server error. Please try again later.');
             default:
-              throw new Error(errorData.message || `Server error: ${response.status}`);
+              throw new Error(responseData.message || `Server error: ${response.status}`);
           }
         }
 
-        // Check if there's an error message in the response
-        if (errorData.error || errorData.message) {
-          throw new Error(errorData.error || errorData.message);
-        }
-
         // Validate the response has required fields
-        if (!errorData.id) {
-          console.error('Invalid response format:', errorData);
+        if (!responseData.id) {
+          console.error('Invalid response format:', responseData);
           throw new Error('Invalid server response format');
         }
 
-        return errorData;
+        return responseData;
       } catch (error) {
         console.error('Error in supplement creation:', error);
         throw error;
