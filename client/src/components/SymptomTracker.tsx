@@ -263,7 +263,7 @@ export default function SymptomTracker(): ReactElement {
                         min={1}
                         max={10}
                         step={1}
-                        value={[field.value]}
+                        value={[field.value ?? 5]}
                         onValueChange={([value]) => field.onChange(value)}
                       />
                     </FormControl>
@@ -327,7 +327,7 @@ export default function SymptomTracker(): ReactElement {
                         min={1}
                         max={10}
                         step={1}
-                        value={[field.value]}
+                        value={[field.value ?? 5]}
                         onValueChange={([value]) => field.onChange(value)}
                       />
                     </FormControl>
