@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useForm, ControllerRenderProps, FieldValues } from "react-hook-form";
+import { useForm, Control, ControllerRenderProps } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -210,7 +210,7 @@ export default function SymptomTracker(): ReactElement {
               <FormField
                 control={form.control}
                 name="category"
-                render={({ field }: { field: ControllerRenderProps<SymptomFormData, string> }) => (
+                render={({ field }: { field: ControllerRenderProps<SymptomFormData, "category"> }) => (
                   <FormItem>
                     <FormLabel>Category</FormLabel>
                     <FormControl>
@@ -233,7 +233,7 @@ export default function SymptomTracker(): ReactElement {
               <FormField
                 control={form.control}
                 name="severity"
-                render={({ field }: { field: ControllerRenderProps<SymptomFormData, string> }) => (
+                render={({ field }: { field: ControllerRenderProps<SymptomFormData, "severity"> }) => (
                   <FormItem>
                     <FormLabel>Severity (1-10)</FormLabel>
                     <FormControl>
@@ -256,14 +256,19 @@ export default function SymptomTracker(): ReactElement {
               <FormField
                 control={form.control}
                 name="date"
-                render={({ field }: { field: ControllerRenderProps<SymptomFormData, string> }) => (
+                render={({ field }: { field: ControllerRenderProps<SymptomFormData, "date"> }) => (
                   <FormItem>
                     <FormLabel>Date</FormLabel>
                     <FormControl>
                       <DatePicker
                         selected={new Date(field.value)}
-                        onChange={(date: Date) => field.onChange(date.toISOString())}
+                        onChange={(date: Date | null) => {
+                          if (date) {
+                            field.onChange(date.toISOString());
+                          }
+                        }}
                         dateFormat="yyyy-MM-dd"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       />
                     </FormControl>
                     <FormMessage />
@@ -274,7 +279,7 @@ export default function SymptomTracker(): ReactElement {
               <FormField
                 control={form.control}
                 name="mood"
-                render={({ field }: { field: ControllerRenderProps<SymptomFormData, string> }) => (
+                render={({ field }: { field: ControllerRenderProps<SymptomFormData, "mood"> }) => (
                   <FormItem>
                     <FormLabel>Mood</FormLabel>
                     <FormControl>
@@ -297,7 +302,7 @@ export default function SymptomTracker(): ReactElement {
               <FormField
                 control={form.control}
                 name="moodIntensity"
-                render={({ field }: { field: ControllerRenderProps<SymptomFormData, string> }) => (
+                render={({ field }: { field: ControllerRenderProps<SymptomFormData, "moodIntensity"> }) => (
                   <FormItem>
                     <FormLabel>Mood Intensity (1-10)</FormLabel>
                     <FormControl>
@@ -320,7 +325,7 @@ export default function SymptomTracker(): ReactElement {
               <FormField
                 control={form.control}
                 name="description"
-                render={({ field }: { field: ControllerRenderProps<SymptomFormData, string> }) => (
+                render={({ field }: { field: ControllerRenderProps<SymptomFormData, "description"> }) => (
                   <FormItem>
                     <FormLabel>Description</FormLabel>
                     <FormControl>
