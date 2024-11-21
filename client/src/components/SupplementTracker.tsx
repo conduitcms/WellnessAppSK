@@ -26,7 +26,7 @@ export default function SupplementTracker() {
   const form = useForm<InsertSupplement>({
     resolver: zodResolver(insertSupplementSchema),
     defaultValues,
-    mode: "onSubmit"
+    mode: "onChange"
   });
 
   const { data: supplements, isLoading: isLoadingSupplements, error: supplementsError } = useQuery({
@@ -111,12 +111,8 @@ export default function SupplementTracker() {
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit((data) => {
-                createSupplement.mutate({
-                  ...data,
-                  reminderEnabled: data.reminderEnabled || false,
-                  reminderTime: data.reminderTime || null,
-                  notes: data.notes || ''
-                });
+                console.log('Submitting supplement:', data);
+                createSupplement.mutate(data);
               })}
               className="space-y-4"
             >
@@ -207,7 +203,7 @@ export default function SupplementTracker() {
           {isLoadingSupplements || createSupplement.isPending ? (
             <div className="flex items-center justify-center py-4">
               <Loader2 className="h-6 w-6 animate-spin" />
-              <span className="ml-2">Loading...</span>
+              <span className="ml-2">Loading supplements...</span>
             </div>
           ) : supplementsError ? (
             <div className="text-center py-4 text-destructive">
