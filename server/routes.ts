@@ -2,7 +2,7 @@ import { type Express, type Request, type Response, type NextFunction } from "ex
 import { setupAuth } from "./auth";
 import { db } from "../db";
 import { users, symptoms, supplements, healthMetrics, insertSymptomSchema, insertSupplementSchema } from "@db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 export function registerRoutes(app: Express) {
   const { passport, crypto } = setupAuth(app);
@@ -344,25 +344,35 @@ export function registerRoutes(app: Express) {
           const [existingSupplement] = await tx
             .select()
             .from(supplements)
-            .where(eq(supplements.userId, req.user!.id))
-            .where(eq(supplements.name, result.data.name))
+            .where(
+              and(
+                eq(supplements.userId, req.user!.id),
+                eq(supplements.name, result.data.name)
+              )
+            )
             .limit(1);
 
           if (existingSupplement) {
             throw new Error('Supplement with this name already exists');
           }
 
-          // Attempt insert
-          console.log('Attempting to insert supplement');
+          // Attempt insert with detailed logging
+          console.log('Starting supplement insertion with data:', JSON.stringify(result.data, null, 2));
+          
           const [newSupplement] = await tx.insert(supplements)
             .values(result.data)
             .returning();
 
+          console.log('Insert operation completed, result:', JSON.stringify(newSupplement, null, 2));
+
           if (!newSupplement || !newSupplement.id) {
+            console.error('Insert failed - no valid supplement record returned');
             throw new Error('Failed to create supplement record');
           }
 
-          // Verify the insert
+          // Verify the insert with extra validation
+          console.log(`Verifying supplement insertion with ID: ${newSupplement.id}`);
+          
           const [verifiedSupplement] = await tx
             .select()
             .from(supplements)
@@ -370,8 +380,19 @@ export function registerRoutes(app: Express) {
             .limit(1);
 
           if (!verifiedSupplement) {
+            console.error('Verification failed - supplement not found after insert');
             throw new Error('Supplement verification failed after insert');
           }
+
+          console.log('Supplement verification successful:', JSON.stringify(verifiedSupplement, null, 2));
+
+          // Double check all user's supplements for consistency
+          const userSupplements = await tx
+            .select()
+            .from(supplements)
+            .where(eq(supplements.userId, req.user!.id));
+
+          console.log(`Total supplements for user ${req.user!.id} after insert: ${userSupplements.length}`);
 
           return verifiedSupplement;
         } catch (txError) {
