@@ -1,0 +1,260 @@
+4:56:36 AM [express] serving on port 5000
+
+ ERROR(TypeScript)  Type '{ children: string; to: string; activeClassName: string; }' is not assignable to type 'IntrinsicAttributes & NavLinkProps & RefAttributes<HTMLAnchorElement>'.
+  Property 'activeClassName' does not exist on type 'IntrinsicAttributes & NavLinkProps & RefAttributes<HTMLAnchorElement>'.
+ FILE  /home/runner/WomensWellnessApp/client/src/components/Navbar.tsx:9:40
+
+     7 |         <ul className="flex space-x-4">
+     8 |           <li>
+  >  9 |             <NavLink to="/supplements" activeClassName="font-bold">
+       |                                        ^^^^^^^^^^^^^^^
+    10 |               Supplements
+    11 |             </NavLink>
+    12 |           </li>
+
+ ERROR(TypeScript)  Type '{ children: string; to: string; activeClassName: string; }' is not assignable to type 'IntrinsicAttributes & NavLinkProps & RefAttributes<HTMLAnchorElement>'.
+  Property 'activeClassName' does not exist on type 'IntrinsicAttributes & NavLinkProps & RefAttributes<HTMLAnchorElement>'.
+ FILE  /home/runner/WomensWellnessApp/client/src/components/Navbar.tsx:14:37
+
+    12 |           </li>
+    13 |           <li>
+  > 14 |             <NavLink to="/symptoms" activeClassName="font-bold">
+       |                                     ^^^^^^^^^^^^^^^
+    15 |               Symptoms
+    16 |             </NavLink>
+    17 |           </li>
+
+ ERROR(TypeScript)  Type '{ children: string; to: string; activeClassName: string; }' is not assignable to type 'IntrinsicAttributes & NavLinkProps & RefAttributes<HTMLAnchorElement>'.
+  Property 'activeClassName' does not exist on type 'IntrinsicAttributes & NavLinkProps & RefAttributes<HTMLAnchorElement>'.
+ FILE  /home/runner/WomensWellnessApp/client/src/components/Navbar.tsx:19:34
+
+    17 |           </li>
+    18 |           <li>
+  > 19 |             <NavLink to="/sleep" activeClassName="font-bold">
+       |                                  ^^^^^^^^^^^^^^^
+    20 |               Sleep
+    21 |             </NavLink>
+    22 |           </li>
+
+ ERROR(TypeScript)  Type '{ children: string; to: string; activeClassName: string; }' is not assignable to type 'IntrinsicAttributes & NavLinkProps & RefAttributes<HTMLAnchorElement>'.
+  Property 'activeClassName' does not exist on type 'IntrinsicAttributes & NavLinkProps & RefAttributes<HTMLAnchorElement>'.
+ FILE  /home/runner/WomensWellnessApp/client/src/components/Navbar.tsx:24:39
+
+    22 |           </li>
+    23 |           <li>
+  > 24 |             <NavLink to="/heart-rate" activeClassName="font-bold">
+       |                                       ^^^^^^^^^^^^^^^
+    25 |               Heart Rate
+    26 |             </NavLink>
+    27 |           </li>
+
+ ERROR(TypeScript)  'zodResolver' is declared but its value is never read.
+ FILE  /home/runner/WomensWellnessApp/client/src/components/SupplementTracker.tsx:4:1
+
+    2 | import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+    3 | import { useForm } from "react-hook-form";
+  > 4 | import { zodResolver } from "@hookform/resolvers/zod";
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    5 | import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+    6 | import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+    7 | import { Input } from "@/components/ui/input";
+
+ ERROR(TypeScript)  'insertSupplementSchema' is declared but its value is never read.
+ FILE  /home/runner/WomensWellnessApp/client/src/components/SupplementTracker.tsx:12:10
+
+    10 | import { Loader2 } from "lucide-react";
+    11 | import { useToast } from "@/hooks/use-toast";
+  > 12 | import { insertSupplementSchema, type InsertSupplement, type Supplement } from "@db/schema";
+       |          ^^^^^^^^^^^^^^^^^^^^^^
+    13 | import type { ReactElement } from "react";
+    14 |
+    15 | // Simplified form data interface
+
+ ERROR(TypeScript)  'InsertSupplement' is declared but its value is never read.
+ FILE  /home/runner/WomensWellnessApp/client/src/components/SupplementTracker.tsx:12:39
+
+    10 | import { Loader2 } from "lucide-react";
+    11 | import { useToast } from "@/hooks/use-toast";
+  > 12 | import { insertSupplementSchema, type InsertSupplement, type Supplement } from "@db/schema";
+       |                                       ^^^^^^^^^^^^^^^^
+    13 | import type { ReactElement } from "react";
+    14 |
+    15 | // Simplified form data interface
+
+ ERROR(TypeScript)  'Control' is declared but its value is never read.
+ FILE  /home/runner/WomensWellnessApp/client/src/components/SymptomTracker.tsx:2:19
+
+    1 | import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+  > 2 | import { useForm, Control, ControllerRenderProps } from "react-hook-form";
+      |                   ^^^^^^^
+    3 | import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+    4 | import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+    5 | import { Input } from "@/components/ui/input";
+
+ ERROR(TypeScript)  Type 'number | undefined' is not assignable to type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+ FILE  /home/runner/WomensWellnessApp/client/src/components/SymptomTracker.tsx:313:33
+
+    311 |                         max={10}
+    312 |                         step={1}
+  > 313 |                         value={[field.value]}
+        |                                 ^^^^^^^^^^^
+    314 |                         onValueChange={([value]) => field.onChange(value)}
+    315 |                       />
+    316 |                     </FormControl>
+
+ ERROR(TypeScript)  'props' is declared but its value is never read.
+ FILE  /home/runner/WomensWellnessApp/client/src/components/ui/calendar.tsx:55:20
+
+    53 |       }}
+    54 |       components={{
+  > 55 |         IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
+       |                    ^^^^^^^^^^^^
+    56 |         IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
+    57 |       }}
+    58 |       {...props}
+
+ ERROR(TypeScript)  'props' is declared but its value is never read.
+ FILE  /home/runner/WomensWellnessApp/client/src/components/ui/calendar.tsx:56:21
+
+    54 |       components={{
+    55 |         IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
+  > 56 |         IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
+       |                     ^^^^^^^^^^^^
+    57 |       }}
+    58 |       {...props}
+    59 |     />
+
+ ERROR(TypeScript)  'AuthPage' is declared but its value is never read.
+ FILE  /home/runner/WomensWellnessApp/client/src/main.tsx:9:1
+
+     7 | import { Toaster } from "@/components/ui/toaster";
+     8 | import HomePage from "./pages/HomePage";
+  >  9 | import AuthPage from "./pages/AuthPage";
+       | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    10 | import { Loader2 } from "lucide-react";
+    11 | import { useUser } from "./hooks/use-user";
+    12 | import Layout from "./components/Layout";
+
+ ERROR(TypeScript)  'Loader2' is declared but its value is never read.
+ FILE  /home/runner/WomensWellnessApp/client/src/main.tsx:10:1
+
+     8 | import HomePage from "./pages/HomePage";
+     9 | import AuthPage from "./pages/AuthPage";
+  > 10 | import { Loader2 } from "lucide-react";
+       | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    11 | import { useUser } from "./hooks/use-user";
+    12 | import Layout from "./components/Layout";
+    13 |
+
+ ERROR(TypeScript)  'useUser' is declared but its value is never read.
+ FILE  /home/runner/WomensWellnessApp/client/src/main.tsx:11:1
+
+     9 | import AuthPage from "./pages/AuthPage";
+    10 | import { Loader2 } from "lucide-react";
+  > 11 | import { useUser } from "./hooks/use-user";
+       | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    12 | import Layout from "./components/Layout";
+    13 |
+    14 | function Router() {
+
+ ERROR(TypeScript)  'InsertUser' is declared but its value is never read.
+ FILE  /home/runner/WomensWellnessApp/client/src/pages/AuthPage.tsx:10:33
+
+     8 | import { useToast } from "@/hooks/use-toast";
+     9 | import { useUser } from "../hooks/use-user";
+  > 10 | import { insertUserSchema, type InsertUser } from "@db/schema";
+       |                                 ^^^^^^^^^^
+    11 |
+    12 | interface AuthFormValues {
+    13 |   username: string;
+
+ ERROR(TypeScript)  'showPasswordReset' is declared but its value is never read.
+ FILE  /home/runner/WomensWellnessApp/client/src/pages/AuthPage.tsx:26:10
+
+    24 |   const { toast } = useToast();
+    25 |
+  > 26 |   const [showPasswordReset, setShowPasswordReset] = useState(false);
+       |          ^^^^^^^^^^^^^^^^^
+    27 |   const form = useForm<AuthFormValues>({
+    28 |     resolver: zodResolver(insertUserSchema),
+    29 |     defaultValues: {
+
+ ERROR(TypeScript)  'DailyChecklist' is declared but its value is never read.
+ FILE  /home/runner/WomensWellnessApp/client/src/pages/HomePage.tsx:3:1
+
+    1 | import { useState } from "react";
+    2 | import { Home, Activity, LineChart, Menu } from "lucide-react";
+  > 3 | import { DailyChecklist } from "../components/DailyChecklist";
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    4 | import SymptomTracker from "../components/SymptomTracker";
+    5 | import SupplementTracker from "../components/SupplementTracker";
+    6 | import HealthMetrics from "../components/HealthMetrics";
+
+ ERROR(TypeScript)  'User' is declared but its value is never read.
+ FILE  /home/runner/WomensWellnessApp/server/auth.ts:8:22
+
+     6 | import { scrypt, randomBytes, timingSafeEqual } from "crypto";
+     7 | import { promisify } from "util";
+  >  8 | import { users, type User } from "@db/schema";
+       |                      ^^^^
+     9 | import { db } from "../db";
+    10 | import { eq } from "drizzle-orm";
+    11 |
+
+ ERROR(TypeScript)  'req' is declared but its value is never read.
+ FILE  /home/runner/WomensWellnessApp/server/auth.ts:109:15
+
+    107 |       passwordField: 'password',
+    108 |       passReqToCallback: true
+  > 109 |     }, async (req, email, password, done) => {
+        |               ^^^
+    110 |       const timeout = setTimeout(() => {
+    111 |         done(new Error('Authentication timeout'), false);
+    112 |       }, 30000); // 30 second timeout
+
+ ERROR(TypeScript)  'req' is declared but its value is never read.
+ FILE  /home/runner/WomensWellnessApp/server/routes.ts:118:59
+
+    116 |   });
+    117 |
+  > 118 |   app.post("/api/login", passport.authenticate("local"), (req: Request, res: Response) => {
+        |                                                           ^^^
+    119 |     res.json({ message: "Login successful" });
+    120 |   });
+    121 |
+
+ ERROR(TypeScript)  'validatedData' is declared but its value is never read.
+ FILE  /home/runner/WomensWellnessApp/server/routes.ts:337:13
+
+    335 |
+    336 |       // Validate the transformed data
+  > 337 |       const validatedData = insertSupplementSchema.parse(result.data);
+        |             ^^^^^^^^^^^^^
+    338 |
+    339 |       // Start transaction
+    340 |       const supplement = await db.transaction(async (tx) => {
+
+ ERROR(TypeScript)  'req' is declared but its value is never read.
+ FILE  /home/runner/WomensWellnessApp/server/routes.ts:488:24
+
+    486 |
+    487 |   // Error handling middleware
+  > 488 |   app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+        |                        ^^^
+    489 |     console.error('Server error:', err);
+    490 |     
+    491 |     if (err.name === 'TimeoutError') {
+
+ ERROR(TypeScript)  'next' is declared but its value is never read.
+ FILE  /home/runner/WomensWellnessApp/server/routes.ts:488:53
+
+    486 |
+    487 |   // Error handling middleware
+  > 488 |   app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+        |                                                     ^^^^
+    489 |     console.error('Server error:', err);
+    490 |     
+    491 |     if (err.name === 'TimeoutError') {
+
+[TypeScript] Found 23 errors. Watching for file changes.
