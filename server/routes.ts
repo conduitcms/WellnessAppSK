@@ -295,21 +295,163 @@ export function registerRoutes(app: Express) {
   });
 
   app.post("/api/supplements", ensureAuth, async (req: Request, res: Response) => {
+    console.log('=== Starting supplement creation process ===');
+    console.log('Request body:', req.body);
+    console.log('User ID:', req.user?.id);
+    
     try {
+      // Verify user session is still valid
+      if (!req.user || !req.user.id) {
+        console.error('Invalid user session detected');
+        return res.status(401).json({
+          message: "Authentication required",
+          error: "User session invalid"
+        });
+      }
+
+      // Prepare supplement data
       const supplementData = { ...req.body, userId: req.user.id };
+      console.log('Prepared supplement data:', supplementData);
+
+      // Validate request body outside transaction
       const result = insertSupplementSchema.safeParse(supplementData);
       if (!result.success) {
-        return res.status(400).json({ message: "Invalid supplement data" });
+        console.error('Schema validation failed:', {
+          errors: result.error.issues,
+          data: supplementData
+        });
+        return res.status(400).json({
+          message: "Invalid supplement data",
+          errors: result.error.issues.map(issue => ({
+            field: issue.path.join('.'),
+            message: issue.message
+          }))
+        });
+      }
+      console.log('Schema validation passed');
+
+      // Process reminder time
+      if (result.data.reminderEnabled && result.data.reminderTime) {
+        result.data.reminderTime = new Date(result.data.reminderTime);
       }
 
-      const [newSupplement] = await db.insert(supplements).values(result.data).returning();
-      if (!newSupplement) {
-        return res.status(500).json({ message: "Failed to create supplement" });
-      }
+      // Start transaction
+      const supplement = await db.transaction(async (tx) => {
+        try {
+          console.log('Starting database transaction');
+          
+          // Check for duplicate supplement name for this user
+          const [existingSupplement] = await tx
+            .select()
+            .from(supplements)
+            .where(
+              and(
+                eq(supplements.userId, req.user!.id),
+                eq(supplements.name, result.data.name)
+              )
+            )
+            .limit(1);
 
-      res.json(newSupplement);
+          if (existingSupplement) {
+            throw new Error('Supplement with this name already exists');
+          }
+
+          // Attempt insert with detailed logging
+          console.log('Starting supplement insertion with data:', JSON.stringify(result.data, null, 2));
+          
+          const [newSupplement] = await tx.insert(supplements)
+            .values(result.data)
+            .returning();
+
+          console.log('Insert operation completed, result:', JSON.stringify(newSupplement, null, 2));
+
+          if (!newSupplement || !newSupplement.id) {
+            console.error('Insert failed - no valid supplement record returned');
+            throw new Error('Failed to create supplement record');
+          }
+
+          // Verify the insert with extra validation
+          console.log(`Verifying supplement insertion with ID: ${newSupplement.id}`);
+          
+          const [verifiedSupplement] = await tx
+            .select()
+            .from(supplements)
+            .where(eq(supplements.id, newSupplement.id))
+            .limit(1);
+
+          if (!verifiedSupplement) {
+            console.error('Verification failed - supplement not found after insert');
+            throw new Error('Supplement verification failed after insert');
+          }
+
+          console.log('Supplement verification successful:', JSON.stringify(verifiedSupplement, null, 2));
+
+          // Double check all user's supplements for consistency
+          const userSupplements = await tx
+            .select()
+            .from(supplements)
+            .where(eq(supplements.userId, req.user!.id));
+
+          console.log(`Total supplements for user ${req.user!.id} after insert: ${userSupplements.length}`);
+
+          return verifiedSupplement;
+        } catch (txError) {
+          // Log transaction error and rethrow
+          console.error('Transaction error:', txError);
+          throw txError;
+        }
+      });
+
+      console.log('Transaction completed successfully:', supplement);
+      // Return a standardized success response
+      res.json({
+        id: supplement.id,
+        name: supplement.name,
+        dosage: supplement.dosage,
+        frequency: supplement.frequency,
+        reminderEnabled: supplement.reminderEnabled,
+        reminderTime: supplement.reminderTime,
+        notes: supplement.notes
+      });
+      
     } catch (error) {
-      res.status(500).json({ message: "Server error" });
+      console.error('=== Error in supplement creation ===');
+      console.error('Error details:', {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      
+      // Handle specific error cases
+      if (error instanceof Error) {
+        switch (true) {
+          case error.message === 'Supplement with this name already exists':
+            return res.status(409).json({
+              message: "Duplicate supplement",
+              error: "A supplement with this name already exists"
+            });
+          case error.message.includes('constraint'):
+            return res.status(400).json({
+              message: "Invalid data",
+              error: "The supplement data violates database constraints"
+            });
+          case error.message === 'Failed to create supplement record':
+            return res.status(500).json({
+              message: "Database error",
+              error: "Failed to create supplement record"
+            });
+          default:
+            return res.status(500).json({
+              message: "Server error",
+              error: "An unexpected error occurred while creating the supplement"
+            });
+        }
+      }
+
+      res.status(500).json({
+        message: "Failed to create supplement",
+        error: "Unknown error occurred"
+      });
     }
   });
 

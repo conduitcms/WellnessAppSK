@@ -32,7 +32,9 @@ export const supplements = pgTable("supplements", {
   reminderEnabled: boolean("reminder_enabled").default(false),
   reminderTime: timestamp("reminder_time"),
   notes: text("notes"),
-  imageUrl: text("image_url")
+  imageUrl: text("image_url"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
 });
 
 export const healthMetrics = pgTable("health_metrics", {
@@ -68,7 +70,11 @@ export const selectSymptomSchema = createSelectSchema(symptoms);
 export type InsertSymptom = z.infer<typeof insertSymptomSchema>;
 export type Symptom = z.infer<typeof selectSymptomSchema>;
 
-export const insertSupplementSchema = createInsertSchema(supplements);
+export const insertSupplementSchema = createInsertSchema(supplements, {
+  reminderTime: z.date().nullable().optional(),
+  notes: z.string().optional(),
+  imageUrl: z.string().optional()
+});
 export const selectSupplementSchema = createSelectSchema(supplements);
 export type InsertSupplement = z.infer<typeof insertSupplementSchema>;
 export type Supplement = z.infer<typeof selectSupplementSchema>;

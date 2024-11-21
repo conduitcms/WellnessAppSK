@@ -9,10 +9,9 @@ import { Switch } from "@/components/ui/switch";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { insertSupplementSchema, type InsertSupplement, type Supplement } from "@db/schema";
-import type { FieldValues } from "react-hook-form";
 import type { ReactElement } from "react";
 
-interface SupplementFormData extends InsertSupplement {
+interface SupplementFormData extends Omit<InsertSupplement, 'userId'> {
   reminderEnabled: boolean;
   reminderTime: Date | null;
   notes: string;
@@ -22,7 +21,7 @@ export default function SupplementTracker(): ReactElement {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const defaultValues = {
+  const defaultValues: SupplementFormData = {
     name: "",
     dosage: "",
     frequency: "",
@@ -43,22 +42,30 @@ export default function SupplementTracker(): ReactElement {
   >({
     queryKey: ["supplements"],
     queryFn: async () => {
+      console.log("Fetching supplements...");
       const response = await fetch("/api/supplements", {
         credentials: "include",
         headers: {
           "Accept": "application/json",
         }
       });
+      
       if (!response.ok) {
-        throw new Error("Failed to fetch supplements");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to fetch supplements");
       }
+      
       const data = await response.json();
+      console.log("Fetched supplements:", data);
       return data;
     },
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const createSupplement = useMutation<Supplement, Error, SupplementFormData>({
     mutationFn: async (data: SupplementFormData) => {
+      console.log("Creating supplement:", data);
       const response = await fetch("/api/supplements", {
         method: "POST",
         credentials: "include",
@@ -69,66 +76,36 @@ export default function SupplementTracker(): ReactElement {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to create supplement");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to create supplement");
       }
 
-      return response.json();
+      const result = await response.json();
+      console.log("Created supplement:", result);
+      return result;
     },
-    onMutate: async (newSupplement) => {
-      await queryClient.cancelQueries({ queryKey: ["supplements"] });
-
-      const previousSupplements = queryClient.getQueryData<Supplement[]>(["supplements"]);
-
-      queryClient.setQueryData<Supplement[]>(["supplements"], (old = []) => {
-        const optimisticSupplement = {
-          ...newSupplement,
-          id: Date.now(),
-          userId: -1,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-        return [...old, optimisticSupplement];
-      });
-
-      return { previousSupplements };
-    },
-    onError: (err, newSupplement, context) => {
-      if (context?.previousSupplements) {
-        queryClient.setQueryData(["supplements"], context.previousSupplements);
-      }
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: err.message || "Failed to add supplement",
-      });
-    },
-    onSuccess: (data) => {
+    onSuccess: () => {
       form.reset();
-      
-      queryClient.setQueryData<Supplement[]>(["supplements"], (old = []) => {
-        const filtered = old.filter(s => typeof s.id === 'number');
-        return [...filtered, data];
-      });
+      queryClient.invalidateQueries({ queryKey: ["supplements"] });
       
       toast({
         title: "Success",
         description: "Supplement added successfully",
       });
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["supplements"] });
+    onError: (error: Error) => {
+      console.error("Error creating supplement:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to add supplement",
+      });
     },
   });
 
   const onSubmit = (data: SupplementFormData) => {
-    const supplementData = {
-      ...data,
-      reminderEnabled: data.reminderEnabled || false,
-      reminderTime: data.reminderTime || null,
-      notes: data.notes || "",
-    };
-    
-    createSupplement.mutate(supplementData);
+    console.log("Submitting form data:", data);
+    createSupplement.mutate(data);
   };
 
   return (
