@@ -18,7 +18,7 @@ type SupplementFormData = {
   dosage: string;
   frequency: string;
   reminderEnabled: boolean;
-  reminderTime: string;
+  reminderTime: string | null;
   notes: string;
 };
 
@@ -381,8 +381,9 @@ export default function SupplementTracker(): ReactElement {
                         variant="secondary"
                         size="sm"
                         onClick={() => {
-                          // Handle taking supplement
-                          takeSupplement(supplement.id);
+                          if (supplement.id) {
+                            mutate.takeSupplement(supplement.id);
+                          }
                         }}
                       >
                         Take
