@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
+import { useForm, ControllerRenderProps, FieldValues } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,10 @@ import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { type Symptom } from "@db/schema";
 import type { ReactElement } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 // Simplified form data interface
 const SYMPTOM_CATEGORIES = [
@@ -46,12 +50,23 @@ type SymptomFormData = {
   moodIntensity?: number;
 };
 
+// Define validation schema
+const symptomFormSchema = z.object({
+  category: z.string().nonempty("Category is required"),
+  severity: z.number().min(1).max(10),
+  description: z.string().max(500, "Description is too long"),
+  date: z.string(),
+  mood: z.string().optional(),
+  moodIntensity: z.number().min(1).max(10).optional(),
+});
+
 export default function SymptomTracker(): ReactElement {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Simplified form setup
   const form = useForm<SymptomFormData>({
+    resolver: zodResolver(symptomFormSchema),
     defaultValues: {
       category: "Other",
       severity: 5,
@@ -195,7 +210,7 @@ export default function SymptomTracker(): ReactElement {
               <FormField
                 control={form.control}
                 name="category"
-                render={({ field }) => (
+                render={({ field }: { field: ControllerRenderProps<SymptomFormData, string> }) => (
                   <FormItem>
                     <FormLabel>Category</FormLabel>
                     <FormControl>
@@ -218,7 +233,7 @@ export default function SymptomTracker(): ReactElement {
               <FormField
                 control={form.control}
                 name="severity"
-                render={({ field }) => (
+                render={({ field }: { field: ControllerRenderProps<SymptomFormData, string> }) => (
                   <FormItem>
                     <FormLabel>Severity (1-10)</FormLabel>
                     <FormControl>
@@ -241,11 +256,15 @@ export default function SymptomTracker(): ReactElement {
               <FormField
                 control={form.control}
                 name="date"
-                render={({ field }) => (
+                render={({ field }: { field: ControllerRenderProps<SymptomFormData, string> }) => (
                   <FormItem>
                     <FormLabel>Date</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} />
+                      <DatePicker
+                        selected={new Date(field.value)}
+                        onChange={(date: Date) => field.onChange(date.toISOString())}
+                        dateFormat="yyyy-MM-dd"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -255,7 +274,7 @@ export default function SymptomTracker(): ReactElement {
               <FormField
                 control={form.control}
                 name="mood"
-                render={({ field }) => (
+                render={({ field }: { field: ControllerRenderProps<SymptomFormData, string> }) => (
                   <FormItem>
                     <FormLabel>Mood</FormLabel>
                     <FormControl>
@@ -278,7 +297,7 @@ export default function SymptomTracker(): ReactElement {
               <FormField
                 control={form.control}
                 name="moodIntensity"
-                render={({ field }) => (
+                render={({ field }: { field: ControllerRenderProps<SymptomFormData, string> }) => (
                   <FormItem>
                     <FormLabel>Mood Intensity (1-10)</FormLabel>
                     <FormControl>
@@ -301,7 +320,7 @@ export default function SymptomTracker(): ReactElement {
               <FormField
                 control={form.control}
                 name="description"
-                render={({ field }) => (
+                render={({ field }: { field: ControllerRenderProps<SymptomFormData, string> }) => (
                   <FormItem>
                     <FormLabel>Description</FormLabel>
                     <FormControl>
