@@ -103,7 +103,13 @@ export default function SupplementTracker() {
           }
         }
 
-        if (!errorData.id || !errorData.name) {
+        // Check if there's an error message in the response
+        if (errorData.error || errorData.message) {
+          throw new Error(errorData.error || errorData.message);
+        }
+
+        // Validate the response has required fields
+        if (!errorData.id) {
           console.error('Invalid response format:', errorData);
           throw new Error('Invalid server response format');
         }

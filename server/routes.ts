@@ -403,7 +403,16 @@ export function registerRoutes(app: Express) {
       });
 
       console.log('Transaction completed successfully:', supplement);
-      res.json(supplement);
+      // Return a standardized success response
+      res.json({
+        id: supplement.id,
+        name: supplement.name,
+        dosage: supplement.dosage,
+        frequency: supplement.frequency,
+        reminderEnabled: supplement.reminderEnabled,
+        reminderTime: supplement.reminderTime,
+        notes: supplement.notes
+      });
       
     } catch (error) {
       console.error('=== Error in supplement creation ===');
