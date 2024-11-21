@@ -125,6 +125,30 @@ export default function SupplementTracker(): ReactElement {
 
       if (!response.ok) {
         throw new Error("Failed to delete supplement");
+      }
+
+      return supplementId;
+    },
+    onSuccess: (deletedSupplementId) => {
+      // Update cache by removing the deleted supplement
+      queryClient.setQueryData<Supplement[]>(["supplements"], (old = []) => {
+        return old.filter(supplement => supplement.id !== deletedSupplementId);
+      });
+
+      toast({
+        title: "Success",
+        description: "Supplement deleted successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to delete supplement",
+      });
+    },
+  });
+
   // Mutation for taking supplements
   const { mutate: takeSupplement } = useMutation({
     mutationFn: async (supplementId: number) => {
@@ -202,29 +226,6 @@ export default function SupplementTracker(): ReactElement {
     const interval = setInterval(checkDueSupplements, 60000); // Check every minute
     return () => clearInterval(interval);
   }, [supplements]);
-      }
-
-      return supplementId;
-    },
-    onSuccess: (deletedSupplementId) => {
-      // Update cache by removing the deleted supplement
-      queryClient.setQueryData<Supplement[]>(["supplements"], (old = []) => {
-        return old.filter(supplement => supplement.id !== deletedSupplementId);
-      });
-
-      toast({
-        title: "Success",
-        description: "Supplement deleted successfully",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to delete supplement",
-      });
-    },
-  });
 
   // Form submission handler
   const onSubmit = (data: SupplementFormData) => {
@@ -319,6 +320,7 @@ export default function SupplementTracker(): ReactElement {
                         <Input
                           type="time"
                           {...field}
+                          value={field.value ?? ''}
                         />
                       </FormControl>
                       <FormMessage />
@@ -382,7 +384,7 @@ export default function SupplementTracker(): ReactElement {
                         size="sm"
                         onClick={() => {
                           if (supplement.id) {
-                            mutate.takeSupplement(supplement.id);
+                            takeSupplement(supplement.id);
                           }
                         }}
                       >
