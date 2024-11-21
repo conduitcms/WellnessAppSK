@@ -34,7 +34,8 @@ export default function SupplementTracker() {
     queryFn: async () => {
       try {
         const response = await fetch("/api/supplements", {
-          credentials: "include"
+          credentials: "include",
+          cache: 'no-store' // Disable caching
         });
         if (!response.ok) {
           console.error('Failed to fetch supplements:', await response.text());
@@ -48,6 +49,8 @@ export default function SupplementTracker() {
         throw error;
       }
     },
+    staleTime: 0, // Consider data immediately stale
+    cacheTime: 0, // Don't cache at all
   });
 
   const createSupplement = useMutation({
@@ -116,16 +119,14 @@ export default function SupplementTracker() {
       }
     },
     onSuccess: (data) => {
-      console.log('Mutation succeeded:', data);
-      
       // Reset form
       form.reset();
       
-      // Update cache with new supplement
-      queryClient.setQueryData(["supplements"], (old: any[] = []) => [...old, data]);
-      
-      // Then invalidate to ensure fresh data
+      // Force a fresh fetch instead of cache manipulation
       queryClient.invalidateQueries({ queryKey: ["supplements"] });
+      
+      // Log cache state for debugging
+      console.log('Cache after mutation:', queryClient.getQueryData(["supplements"]));
       
       toast({
         title: "Success",
