@@ -26,13 +26,6 @@ const supplementFormSchema = z.object({
 
 type SupplementFormData = z.infer<typeof supplementFormSchema>;
 
-// Add this type for the API response
-interface ApiResponse {
-  success: boolean;
-  data?: Supplement;
-  error?: string;
-}
-
 export default function SupplementTracker(): ReactElement {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -174,25 +167,36 @@ export default function SupplementTracker(): ReactElement {
       });
 
       if (!response.ok) {
-        // Try to parse error response as JSON first
+        const errorText = await response.text();
+        let errorMessage: string;
+        
         try {
-          const errorData = await response.json();
-          throw new Error(errorData.message || "Failed to mark supplement as taken");
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.message || errorData.error || "Failed to mark supplement as taken";
         } catch (e) {
-          // If JSON parsing fails, use status text
-          throw new Error(`Failed to mark supplement as taken: ${response.statusText}`);
+          errorMessage = errorText || response.statusText || "Failed to mark supplement as taken";
         }
+        
+        throw new Error(errorMessage);
+      }
+
+      const responseText = await response.text();
+      if (!responseText) {
+        throw new Error("Empty response from server");
       }
 
       try {
-        const data = await response.json();
+        const data = JSON.parse(responseText);
+        if (!data || typeof data !== 'object') {
+          throw new Error("Invalid response format");
+        }
         return data as Supplement;
       } catch (e) {
+        console.error("Error parsing response:", e, "Response text:", responseText);
         throw new Error("Invalid response format from server");
       }
     },
-    onSuccess: (updatedSupplement) => {
-      // Update cache by updating the taken supplement
+    onSuccess: (updatedSupplement: Supplement) => {
       queryClient.setQueryData<Supplement[]>(["supplements"], (old = []) => {
         return old.map(supplement => 
           supplement.id === updatedSupplement.id ? updatedSupplement : supplement
