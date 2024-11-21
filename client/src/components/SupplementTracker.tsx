@@ -11,90 +11,99 @@ import { useToast } from "@/hooks/use-toast";
 import { insertSupplementSchema, type InsertSupplement, type Supplement } from "@db/schema";
 import type { ReactElement } from "react";
 
-interface SupplementFormData extends Omit<InsertSupplement, 'userId'> {
+// Simplified form data interface
+type SupplementFormData = {
+  name: string;
+  dosage: string;
+  frequency: string;
   reminderEnabled: boolean;
-  reminderTime: Date | null;
   notes: string;
-}
+};
 
 export default function SupplementTracker(): ReactElement {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const defaultValues: SupplementFormData = {
-    name: "",
-    dosage: "",
-    frequency: "",
-    reminderEnabled: false,
-    reminderTime: null,
-    notes: "",
-  };
-
+  // Simplified form setup
   const form = useForm<SupplementFormData>({
-    resolver: zodResolver(insertSupplementSchema),
-    defaultValues,
-    mode: "onBlur"
+    defaultValues: {
+      name: "",
+      dosage: "",
+      frequency: "",
+      reminderEnabled: false,
+      notes: "",
+    }
   });
 
-  const { data: supplements = [], isLoading: isLoadingSupplements, error: supplementsError } = useQuery<
-    Supplement[],
-    Error
-  >({
+  // Query for fetching supplements
+  const { 
+    data: supplements = [], 
+    isLoading: isLoadingSupplements 
+  } = useQuery({
     queryKey: ["supplements"],
     queryFn: async () => {
-      console.log("Fetching supplements...");
-      const response = await fetch("/api/supplements", {
-        credentials: "include",
-        headers: {
-          "Accept": "application/json",
+      try {
+        const response = await fetch("/api/supplements", {
+          credentials: "include"
+        });
+        
+        if (!response.ok) {
+          throw new Error("Failed to fetch supplements");
         }
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to fetch supplements");
+
+        const data = await response.json();
+        console.log("Fetched supplements:", data);
+        return data as Supplement[];
+      } catch (error) {
+        console.error("Error fetching supplements:", error);
+        throw error;
       }
-      
-      const data = await response.json();
-      console.log("Fetched supplements:", data);
-      return data;
-    },
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
+    }
   });
 
-  const createSupplement = useMutation<Supplement, Error, SupplementFormData>({
+  // Mutation for creating supplements
+  const { mutate: createSupplement, isPending } = useMutation({
     mutationFn: async (data: SupplementFormData) => {
-      console.log("Creating supplement:", data);
-      const response = await fetch("/api/supplements", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
+      try {
+        console.log("Sending supplement data:", data);
+        const response = await fetch("/api/supplements", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(data),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Failed to create supplement");
+        }
+
+        return response.json();
+      } catch (error) {
+        console.error("Error creating supplement:", error);
+        throw error;
+      }
+    },
+    onSuccess: (newSupplement) => {
+      // Update the cache with the new supplement
+      queryClient.setQueryData<Supplement[]>(["supplements"], (old = []) => {
+        return [...old, newSupplement];
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to create supplement");
-      }
-
-      const result = await response.json();
-      console.log("Created supplement:", result);
-      return result;
-    },
-    onSuccess: () => {
+      // Reset form
       form.reset();
-      queryClient.invalidateQueries({ queryKey: ["supplements"] });
-      
+
       toast({
         title: "Success",
         description: "Supplement added successfully",
       });
+
+      // Force a refresh of the supplements list
+      queryClient.invalidateQueries({ queryKey: ["supplements"] });
     },
     onError: (error: Error) => {
-      console.error("Error creating supplement:", error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -103,9 +112,10 @@ export default function SupplementTracker(): ReactElement {
     },
   });
 
+  // Form submission handler
   const onSubmit = (data: SupplementFormData) => {
-    console.log("Submitting form data:", data);
-    createSupplement.mutate(data);
+    console.log("Form submitted with data:", data);
+    createSupplement(data);
   };
 
   return (
@@ -116,23 +126,21 @@ export default function SupplementTracker(): ReactElement {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(onSubmit)}
-              className="space-y-4"
-            >
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Supplement Name</FormLabel>
+                    <FormLabel>Name</FormLabel>
                     <FormControl>
                       <Input {...field} placeholder="Enter supplement name" />
                     </FormControl>
-                    <FormMessage className="text-red-500" />
+                    <FormMessage />
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
                 name="dosage"
@@ -142,13 +150,11 @@ export default function SupplementTracker(): ReactElement {
                     <FormControl>
                       <Input {...field} placeholder="e.g., 500mg" />
                     </FormControl>
-                    <FormMessage className="text-red-500" />
-                    <p className="text-sm text-muted-foreground">
-                      Specify amount per dose (e.g., 500mg, 1 tablet)
-                    </p>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
                 name="frequency"
@@ -156,36 +162,19 @@ export default function SupplementTracker(): ReactElement {
                   <FormItem>
                     <FormLabel>Frequency</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="e.g., Once daily with meals" />
+                      <Input {...field} placeholder="e.g., Once daily" />
                     </FormControl>
-                    <FormMessage className="text-red-500" />
-                    <p className="text-sm text-muted-foreground">
-                      Specify how often to take this supplement
-                    </p>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="reminderEnabled"
-                render={({ field }) => (
-                  <FormItem className="flex items-center justify-between">
-                    <FormLabel>Enable Reminders</FormLabel>
-                    <FormControl>
-                      <Switch
-                        checked={!!field.value}
-                        onCheckedChange={(checked) => field.onChange(checked)}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
+
               <Button 
                 type="submit" 
-                disabled={createSupplement.isPending}
+                disabled={isPending}
                 className="w-full"
               >
-                {createSupplement.isPending ? (
+                {isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Adding...
@@ -204,56 +193,33 @@ export default function SupplementTracker(): ReactElement {
           <CardTitle>My Supplements</CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoadingSupplements || createSupplement.isPending ? (
+          {isLoadingSupplements ? (
             <div className="flex items-center justify-center py-4">
               <Loader2 className="h-6 w-6 animate-spin" />
               <span className="ml-2">Loading supplements...</span>
             </div>
-          ) : supplementsError ? (
-            <div className="text-center py-4 text-destructive">
-              Error loading supplements: {supplementsError.message}
-            </div>
-          ) : (
+          ) : supplements.length > 0 ? (
             <div className="space-y-4">
-              {supplements?.length > 0 ? (
-                supplements.map((supplement: Supplement) => (
+              {supplements.map((supplement) => (
                 <div
                   key={supplement.id}
                   className="p-4 border rounded-lg space-y-2"
                 >
                   <div className="flex justify-between items-center">
                     <div>
-                      <span className="font-medium text-white">{supplement.name}</span>
-                      <p className="text-sm text-gray-400">{supplement.dosage}</p>
+                      <h3 className="font-medium">{supplement.name}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {supplement.dosage}
+                      </p>
                     </div>
-                    <Button 
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        toast({
-                          title: "Supplement Taken",
-                          description: `Marked ${supplement.name} as taken`,
-                        });
-                      }}
-                    >
-                      Take
-                    </Button>
-                  </div>
-                  <div className="flex justify-between items-center mt-2">
-                    <p className="text-sm text-gray-400">
-                      Next dose: {supplement.reminderTime ? new Date(supplement.reminderTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Not scheduled'}
-                    </p>
-                    <span className="text-xs text-primary">
-                      {supplement.frequency}
-                    </span>
+                    <p className="text-sm">{supplement.frequency}</p>
                   </div>
                 </div>
-              ))
-              ) : (
-                <div className="text-center py-4 text-gray-400">
-                  No supplements added yet
-                </div>
-              )}
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-4 text-muted-foreground">
+              No supplements added yet
             </div>
           )}
         </CardContent>
