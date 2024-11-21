@@ -24,11 +24,26 @@ const SYMPTOM_CATEGORIES = [
 
 type SymptomCategory = typeof SYMPTOM_CATEGORIES[number];
 
+const MOOD_OPTIONS = [
+  "Happy",
+  "Calm",
+  "Anxious",
+  "Irritable",
+  "Sad",
+  "Energetic",
+  "Tired",
+  "Neutral"
+] as const;
+
+type MoodOption = typeof MOOD_OPTIONS[number];
+
 type SymptomFormData = {
   category: SymptomCategory;
   severity: number;
   description: string;
   date: string;
+  mood?: MoodOption;
+  moodIntensity?: number;
 };
 
 export default function SymptomTracker(): ReactElement {
@@ -41,7 +56,9 @@ export default function SymptomTracker(): ReactElement {
       category: "Other",
       severity: 5,
       description: "",
-      date: new Date().toISOString().split('T')[0]
+      date: new Date().toISOString().split('T')[0],
+      mood: "Neutral",
+      moodIntensity: 5
     }
   });
 
@@ -237,6 +254,52 @@ export default function SymptomTracker(): ReactElement {
 
               <FormField
                 control={form.control}
+                name="mood"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Mood</FormLabel>
+                    <FormControl>
+                      <select
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        {...field}
+                      >
+                        {MOOD_OPTIONS.map((mood) => (
+                          <option key={mood} value={mood}>
+                            {mood}
+                          </option>
+                        ))}
+                      </select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="moodIntensity"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Mood Intensity (1-10)</FormLabel>
+                    <FormControl>
+                      <Slider
+                        min={1}
+                        max={10}
+                        step={1}
+                        value={[field.value]}
+                        onValueChange={([value]) => field.onChange(value)}
+                      />
+                    </FormControl>
+                    <div className="text-center text-sm text-muted-foreground">
+                      {field.value}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="description"
                 render={({ field }) => (
                   <FormItem>
@@ -288,7 +351,14 @@ export default function SymptomTracker(): ReactElement {
                   <div className="flex justify-between items-center">
                     <div>
                       <h3 className="font-medium">{symptom.category}</h3>
-                      <p className="text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2">
+                        {symptom.mood && (
+                          <span className="text-sm bg-muted px-2 py-1 rounded">
+                            Mood: {symptom.mood} ({symptom.moodIntensity}/10)
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">
                         {symptom.description}
                       </p>
                     </div>

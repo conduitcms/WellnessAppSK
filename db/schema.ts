@@ -20,7 +20,9 @@ export const symptoms = pgTable("symptoms", {
   category: text("category").notNull(),
   severity: integer("severity").notNull(),
   description: text("description"),
-  date: timestamp("date").defaultNow().notNull()
+  date: timestamp("date").defaultNow().notNull(),
+  mood: text("mood"),
+  moodIntensity: integer("mood_intensity")
 });
 
 export const supplements = pgTable("supplements", {
