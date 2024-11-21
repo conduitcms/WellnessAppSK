@@ -1,20 +1,18 @@
+import { type ReactElement } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
-import type { FieldValues, Path } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { type Symptom } from "@db/schema";
-import type { ReactElement } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import type { ControllerRenderProps } from "react-hook-form";
 
 // Simplified form data interface
 const SYMPTOM_CATEGORIES = [
@@ -62,6 +60,28 @@ const symptomFormSchema = z.object({
   moodIntensity: z.number().min(1).max(10),
 });
 
+// Add type for the API response
+interface SymptomResponse {
+  id: number;
+  category: string;
+  severity: number;
+  description: string;
+  date: string;
+  mood: string;
+  moodIntensity: number;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Update the form field types
+interface FormField<T = any> {
+  field: {
+    value: T;
+    onChange: (value: T) => void;
+  };
+}
+
 export default function SymptomTracker(): ReactElement {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -83,7 +103,7 @@ export default function SymptomTracker(): ReactElement {
   const { 
     data: symptoms = [], 
     isLoading: isLoadingSymptoms 
-  } = useQuery({
+  } = useQuery<SymptomResponse[]>({
     queryKey: ["symptoms"],
     queryFn: async () => {
       try {
@@ -97,7 +117,7 @@ export default function SymptomTracker(): ReactElement {
 
         const data = await response.json();
         console.log("Fetched symptoms:", data);
-        return data as Symptom[];
+        return data as SymptomResponse[];
       } catch (error) {
         console.error("Error fetching symptoms:", error);
         throw error;
@@ -106,7 +126,12 @@ export default function SymptomTracker(): ReactElement {
   });
 
   // Mutation for creating symptoms
-  const { mutate: createSymptom, isPending } = useMutation({
+  const { mutate: createSymptom, isPending } = useMutation<
+    SymptomResponse,
+    Error,
+    SymptomFormData,
+    unknown
+  >({
     mutationFn: async (data: SymptomFormData) => {
       try {
         console.log("Sending symptom data:", data);
@@ -130,9 +155,9 @@ export default function SymptomTracker(): ReactElement {
         throw error;
       }
     },
-    onSuccess: (newSymptom: Symptom) => {
+    onSuccess: (newSymptom) => {
       // Update the cache with the new symptom
-      queryClient.setQueryData<Symptom[]>(["symptoms"], (old = []) => {
+      queryClient.setQueryData<SymptomResponse[]>(["symptoms"], (old = []) => {
         return [...old, newSymptom];
       });
 
@@ -157,7 +182,12 @@ export default function SymptomTracker(): ReactElement {
   });
 
   // Add delete mutation
-  const { mutate: deleteSymptom } = useMutation({
+  const { mutate: deleteSymptom } = useMutation<
+    number,
+    Error,
+    number,
+    unknown
+  >({
     mutationFn: async (symptomId: number) => {
       const response = await fetch(`/api/symptoms/${symptomId}`, {
         method: "DELETE",
@@ -170,9 +200,9 @@ export default function SymptomTracker(): ReactElement {
 
       return symptomId;
     },
-    onSuccess: (deletedSymptomId: number) => {
+    onSuccess: (deletedSymptomId) => {
       // Update cache by removing the deleted symptom
-      queryClient.setQueryData<Symptom[]>(["symptoms"], (old = []) => {
+      queryClient.setQueryData<SymptomResponse[]>(["symptoms"], (old = []) => {
         return old.filter(symptom => symptom.id !== deletedSymptomId);
       });
 
@@ -212,7 +242,7 @@ export default function SymptomTracker(): ReactElement {
               <FormField
                 control={form.control}
                 name="category"
-                render={({ field }: { field: ControllerRenderProps<SymptomFormData, "category"> }) => (
+                render={({ field }: { field: FormField['field'] }) => (
                   <FormItem>
                     <FormLabel>Category</FormLabel>
                     <FormControl>
@@ -235,7 +265,7 @@ export default function SymptomTracker(): ReactElement {
               <FormField
                 control={form.control}
                 name="severity"
-                render={({ field }: { field: ControllerRenderProps<SymptomFormData, "severity"> }) => (
+                render={({ field }: { field: FormField['field'] }) => (
                   <FormItem>
                     <FormLabel>Severity (1-10)</FormLabel>
                     <FormControl>
@@ -244,7 +274,7 @@ export default function SymptomTracker(): ReactElement {
                         max={10}
                         step={1}
                         value={[field.value]}
-                        onValueChange={([value]: number[]) => field.onChange(value)}
+                        onValueChange={([value]) => field.onChange(value)}
                       />
                     </FormControl>
                     <div className="text-center text-sm text-muted-foreground">
@@ -258,7 +288,7 @@ export default function SymptomTracker(): ReactElement {
               <FormField
                 control={form.control}
                 name="date"
-                render={({ field }: { field: ControllerRenderProps<SymptomFormData, "date"> }) => (
+                render={({ field }: { field: FormField['field'] }) => (
                   <FormItem>
                     <FormLabel>Date</FormLabel>
                     <FormControl>
@@ -281,7 +311,7 @@ export default function SymptomTracker(): ReactElement {
               <FormField
                 control={form.control}
                 name="mood"
-                render={({ field }: { field: ControllerRenderProps<SymptomFormData, "mood"> }) => (
+                render={({ field }: { field: FormField['field'] }) => (
                   <FormItem>
                     <FormLabel>Mood</FormLabel>
                     <FormControl>
@@ -304,7 +334,7 @@ export default function SymptomTracker(): ReactElement {
               <FormField
                 control={form.control}
                 name="moodIntensity"
-                render={({ field }: { field: ControllerRenderProps<SymptomFormData, "moodIntensity"> }) => (
+                render={({ field }: { field: FormField['field'] }) => (
                   <FormItem>
                     <FormLabel>Mood Intensity (1-10)</FormLabel>
                     <FormControl>
@@ -313,7 +343,7 @@ export default function SymptomTracker(): ReactElement {
                         max={10}
                         step={1}
                         value={[field.value]}
-                        onValueChange={([value]: number[]) => field.onChange(value)}
+                        onValueChange={([value]) => field.onChange(value)}
                       />
                     </FormControl>
                     <div className="text-center text-sm text-muted-foreground">
@@ -327,7 +357,7 @@ export default function SymptomTracker(): ReactElement {
               <FormField
                 control={form.control}
                 name="description"
-                render={({ field }: { field: ControllerRenderProps<SymptomFormData, "description"> }) => (
+                render={({ field }: { field: FormField['field'] }) => (
                   <FormItem>
                     <FormLabel>Description</FormLabel>
                     <FormControl>
@@ -369,7 +399,7 @@ export default function SymptomTracker(): ReactElement {
             </div>
           ) : symptoms.length > 0 ? (
             <div className="space-y-4">
-              {symptoms.map((symptom) => (
+              {symptoms.map((symptom: SymptomResponse) => (
                 <div
                   key={symptom.id}
                   className="p-4 border rounded-lg space-y-2"

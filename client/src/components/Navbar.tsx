@@ -6,34 +6,22 @@ function Navbar() {
       <div className="container mx-auto px-4">
         <ul className="flex space-x-4">
           <li>
-            <NavLink
-              to="/supplements"
-              className={({ isActive }) => (isActive ? "font-bold" : undefined)}
-            >
+            <NavLink to="/supplements" activeClassName="font-bold">
               Supplements
             </NavLink>
           </li>
           <li>
-            <NavLink
-              to="/symptoms"
-              className={({ isActive }) => (isActive ? "font-bold" : undefined)}
-            >
+            <NavLink to="/symptoms" activeClassName="font-bold">
               Symptoms
             </NavLink>
           </li>
           <li>
-            <NavLink
-              to="/sleep"
-              className={({ isActive }) => (isActive ? "font-bold" : undefined)}
-            >
+            <NavLink to="/sleep" activeClassName="font-bold">
               Sleep
             </NavLink>
           </li>
           <li>
-            <NavLink
-              to="/heart-rate"
-              className={({ isActive }) => (isActive ? "font-bold" : undefined)}
-            >
+            <NavLink to="/heart-rate" activeClassName="font-bold">
               Heart Rate
             </NavLink>
           </li>

@@ -1,6 +1,4 @@
 {
-  "include": ["client/src/**/*", "db/**/*", "server/**/*"],
-  "exclude": ["node_modules", "build", "dist", "**/*.test.ts"],
   "compilerOptions": {
     "target": "ESNext",
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
@@ -21,6 +19,13 @@
       "@/*": ["./client/src/*"],
       "@db/*": ["./db/*"]
     },
-    "types": ["vite/client", "node", "react", "react-dom"]
-  }
+    "types": ["vite/client", "node", "@types/react", "@types/react-dom"],
+    "typeRoots": ["./node_modules/@types", "./client/src/types"]
+  },
+  "include": [
+    "client/src/**/*",
+    "client/src/types/**/*",
+    "db/**/*"
+  ],
+  "exclude": ["node_modules"]
 }
