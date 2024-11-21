@@ -1,3 +1,4 @@
+import * as React from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -228,7 +229,11 @@ export default function SupplementTracker(): ReactElement {
   // Form submission handler
   const onSubmit = (data: SupplementFormData) => {
     console.log("Form submitted with data:", data);
-    createSupplement(data);
+    // Send the data with reminderTime as string
+    createSupplement({
+      ...data,
+      reminderTime: data.reminderEnabled ? data.reminderTime : null
+    });
   };
 
   return (

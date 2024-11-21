@@ -330,10 +330,11 @@ export function registerRoutes(app: Express) {
       }
       console.log('Schema validation passed');
 
-      // Process reminder time
-      if (result.data.reminderEnabled && result.data.reminderTime) {
-        result.data.reminderTime = new Date(result.data.reminderTime);
-      }
+      // Transform the data for validation
+      result.data.reminderTime = result.data.reminderEnabled ? result.data.reminderTime : null;
+
+      // Validate the transformed data
+      const validatedData = insertSupplementSchema.parse(result.data);
 
       // Start transaction
       const supplement = await db.transaction(async (tx) => {

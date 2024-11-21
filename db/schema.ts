@@ -74,7 +74,7 @@ export type InsertSymptom = z.infer<typeof insertSymptomSchema>;
 export type Symptom = z.infer<typeof selectSymptomSchema>;
 
 export const insertSupplementSchema = createInsertSchema(supplements, {
-  reminderTime: z.date().nullable().optional(),
+  reminderTime: z.string().nullable().optional(), // Change from date to string
   notes: z.string().optional(),
   imageUrl: z.string().optional()
 });
