@@ -45,11 +45,15 @@ export default function SupplementTracker(): ReactElement {
     queryFn: async () => {
       const response = await fetch("/api/supplements", {
         credentials: "include",
+        headers: {
+          "Accept": "application/json",
+        }
       });
       if (!response.ok) {
         throw new Error("Failed to fetch supplements");
       }
-      return response.json();
+      const data = await response.json();
+      return data;
     },
   });
 
@@ -70,22 +74,49 @@ export default function SupplementTracker(): ReactElement {
 
       return response.json();
     },
-    onSuccess: () => {
+    onMutate: async (newSupplement) => {
+      await queryClient.cancelQueries({ queryKey: ["supplements"] });
+
+      const previousSupplements = queryClient.getQueryData<Supplement[]>(["supplements"]);
+
+      queryClient.setQueryData<Supplement[]>(["supplements"], (old = []) => {
+        const optimisticSupplement = {
+          ...newSupplement,
+          id: Date.now(),
+          userId: -1,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+        return [...old, optimisticSupplement];
+      });
+
+      return { previousSupplements };
+    },
+    onError: (err, newSupplement, context) => {
+      if (context?.previousSupplements) {
+        queryClient.setQueryData(["supplements"], context.previousSupplements);
+      }
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: err.message || "Failed to add supplement",
+      });
+    },
+    onSuccess: (data) => {
       form.reset();
-      // Immediately refetch the supplements
-      void queryClient.invalidateQueries({ queryKey: ["supplements"] });
+      
+      queryClient.setQueryData<Supplement[]>(["supplements"], (old = []) => {
+        const filtered = old.filter(s => typeof s.id === 'number');
+        return [...filtered, data];
+      });
       
       toast({
         title: "Success",
         description: "Supplement added successfully",
       });
     },
-    onError: (error: Error) => {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to add supplement",
-      });
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["supplements"] });
     },
   });
 
