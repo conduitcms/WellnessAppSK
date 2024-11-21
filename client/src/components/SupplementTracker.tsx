@@ -26,7 +26,7 @@ export default function SupplementTracker() {
   const form = useForm<InsertSupplement>({
     resolver: zodResolver(insertSupplementSchema),
     defaultValues,
-    mode: "onChange"
+    mode: "onSubmit"
   });
 
   const { data: supplements, isLoading: isLoadingSupplements, error: supplementsError } = useQuery({
@@ -111,14 +111,12 @@ export default function SupplementTracker() {
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit((data) => {
-                console.log('Submitting supplement:', data);
-                const supplementData = {
+                createSupplement.mutate({
                   ...data,
                   reminderEnabled: data.reminderEnabled || false,
                   reminderTime: data.reminderTime || null,
                   notes: data.notes || ''
-                };
-                createSupplement.mutate(supplementData);
+                });
               })}
               className="space-y-4"
             >
@@ -131,7 +129,7 @@ export default function SupplementTracker() {
                     <FormControl>
                       <Input {...field} placeholder="Enter supplement name" />
                     </FormControl>
-                    <FormMessage className="text-red-500" />
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -144,7 +142,7 @@ export default function SupplementTracker() {
                     <FormControl>
                       <Input {...field} placeholder="e.g., 500mg" />
                     </FormControl>
-                    <FormMessage className="text-red-500" />
+                    <FormMessage />
                     <p className="text-sm text-muted-foreground">
                       Specify amount per dose (e.g., 500mg, 1 tablet)
                     </p>
@@ -160,7 +158,7 @@ export default function SupplementTracker() {
                     <FormControl>
                       <Input {...field} placeholder="e.g., Once daily with meals" />
                     </FormControl>
-                    <FormMessage className="text-red-500" />
+                    <FormMessage />
                     <p className="text-sm text-muted-foreground">
                       Specify how often to take this supplement
                     </p>
