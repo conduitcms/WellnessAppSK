@@ -9,8 +9,16 @@ import { Switch } from "@/components/ui/switch";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { insertSupplementSchema, type InsertSupplement, type Supplement } from "@db/schema";
+import type { FieldValues } from "react-hook-form";
+import type { ReactElement } from "react";
 
-export default function SupplementTracker() {
+interface SupplementFormData extends InsertSupplement {
+  reminderEnabled: boolean;
+  reminderTime: string | null;
+  notes: string;
+}
+
+export default function SupplementTracker(): ReactElement {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -23,140 +31,74 @@ export default function SupplementTracker() {
     notes: "",
   };
 
-  const form = useForm<InsertSupplement>({
+  const form = useForm<SupplementFormData>({
     resolver: zodResolver(insertSupplementSchema),
     defaultValues,
-    mode: "onBlur" // Show errors when field loses focus
+    mode: "onBlur"
   });
 
-  const { data: supplements = [], isLoading: isLoadingSupplements, error: supplementsError } = useQuery<Supplement[]>({
+  const { data: supplements = [], isLoading: isLoadingSupplements, error: supplementsError } = useQuery<
+    Supplement[],
+    Error
+  >({
     queryKey: ["supplements"],
     queryFn: async () => {
-      try {
-        const response = await fetch("/api/supplements", {
-          credentials: "include",
-          cache: 'no-store' // Disable caching
-        });
-        if (!response.ok) {
-          console.error('Failed to fetch supplements:', await response.text());
-          throw new Error("Failed to fetch supplements");
-        }
-        const data = await response.json();
-        console.log('Fetched supplements:', data);
-        return data;
-      } catch (error) {
-        console.error('Error fetching supplements:', error);
-        throw error;
+      const response = await fetch("/api/supplements", {
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to fetch supplements");
       }
+      return response.json();
     },
-    staleTime: 0, // Consider data immediately stale
-    cacheTime: 0, // Don't cache at all
   });
 
-  const createSupplement = useMutation({
-    mutationFn: async (data: InsertSupplement) => {
-      try {
-        console.log('=== Starting supplement creation ===');
-        console.log('Form data:', data);
-        
-        // Validate required fields
-        if (!data.name?.trim() || !data.dosage?.trim() || !data.frequency?.trim()) {
-          throw new Error('Please fill in all required fields');
-        }
-        
-        console.log('Sending request to server');
-        const response = await fetch("/api/supplements", {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-          },
-          body: JSON.stringify(data)
-        });
+  const createSupplement = useMutation<Supplement, Error, SupplementFormData>({
+    mutationFn: async (data: SupplementFormData) => {
+      const response = await fetch("/api/supplements", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
 
-        console.log('Server response status:', response.status);
-        
-        let responseData;
-        try {
-          responseData = await response.json();
-        } catch (e) {
-          throw new Error('Unable to parse server response');
-        }
-        
-        if (!response.ok) {
-          console.error('Server error response:', {
-            status: response.status,
-            statusText: response.statusText,
-            data: responseData
-          });
-          
-          // Handle specific status codes
-          switch (response.status) {
-            case 401:
-              throw new Error('Authentication required. Please log in again.');
-            case 409:
-              throw new Error('A supplement with this name already exists.');
-            case 400:
-              throw new Error(responseData.message || 'Invalid supplement data');
-            case 500:
-              throw new Error('Server error. Please try again later.');
-            default:
-              throw new Error(responseData.message || `Server error: ${response.status}`);
-          }
-        }
-
-        // Validate the response has required fields
-        if (!responseData.id) {
-          console.error('Invalid response format:', responseData);
-          throw new Error('Invalid server response format');
-        }
-
-        return responseData;
-      } catch (error) {
-        console.error('Error in supplement creation:', error);
-        throw error;
+      if (!response.ok) {
+        throw new Error("Failed to create supplement");
       }
+
+      return response.json();
     },
-    onSuccess: (data) => {
-      // Reset form
+    onSuccess: () => {
       form.reset();
-      
-      // Force a fresh fetch instead of cache manipulation
-      queryClient.invalidateQueries({ queryKey: ["supplements"] });
-      
-      // Log cache state for debugging
-      console.log('Cache after mutation:', queryClient.getQueryData(["supplements"]));
+      // Immediately refetch the supplements
+      void queryClient.invalidateQueries({ queryKey: ["supplements"] });
       
       toast({
         title: "Success",
-        description: "Supplement added successfully"
+        description: "Supplement added successfully",
       });
     },
     onError: (error: Error) => {
-      console.error('Mutation failed:', error);
-      
-      // Handle specific error types
-      let errorMessage = "Failed to add supplement";
-      if (error.message.includes('Authentication required')) {
-        errorMessage = "Please log in again to continue";
-      } else if (error.message.includes('constraint')) {
-        errorMessage = "This supplement already exists";
-      }
-      
       toast({
         variant: "destructive",
         title: "Error",
-        description: errorMessage
-      });
-      
-      // Log additional error details
-      console.error('Detailed error:', {
-        message: error.message,
-        stack: error.stack
+        description: error.message || "Failed to add supplement",
       });
     },
   });
+
+  const onSubmit = (data: SupplementFormData) => {
+    const supplementData = {
+      ...data,
+      reminderEnabled: data.reminderEnabled || false,
+      reminderTime: data.reminderTime || null,
+      notes: data.notes || "",
+    };
+    
+    createSupplement.mutate(supplementData);
+  };
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
@@ -167,17 +109,7 @@ export default function SupplementTracker() {
         <CardContent>
           <Form {...form}>
             <form
-              onSubmit={form.handleSubmit((data) => {
-                const supplementData = {
-                  ...data,
-                  reminderEnabled: data.reminderEnabled || false,
-                  reminderTime: data.reminderTime || null,
-                  notes: data.notes || ""
-                };
-                
-                console.log('Form data before submission:', supplementData);
-                createSupplement.mutate(supplementData);
-              })}
+              onSubmit={form.handleSubmit(onSubmit)}
               className="space-y-4"
             >
               <FormField

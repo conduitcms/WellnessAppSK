@@ -77,3 +77,25 @@ export const insertHealthMetricSchema = createInsertSchema(healthMetrics);
 export const selectHealthMetricSchema = createSelectSchema(healthMetrics);
 export type InsertHealthMetric = z.infer<typeof insertHealthMetricSchema>;
 export type HealthMetric = z.infer<typeof selectHealthMetricSchema>;
+
+export interface Supplement {
+  id: string;
+  name: string;
+  dosage: string;
+  frequency: string;
+  reminderEnabled: boolean;
+  reminderTime: string | null;
+  notes: string;
+  userId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface InsertSupplement {
+  name: string;
+  dosage: string;
+  frequency: string;
+  reminderEnabled?: boolean;
+  reminderTime?: string | null;
+  notes?: string;
+}
