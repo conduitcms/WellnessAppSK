@@ -26,6 +26,13 @@ const supplementFormSchema = z.object({
 
 type SupplementFormData = z.infer<typeof supplementFormSchema>;
 
+// Add this type for the API response
+interface ApiResponse {
+  success: boolean;
+  data?: Supplement;
+  error?: string;
+}
+
 export default function SupplementTracker(): ReactElement {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -159,14 +166,30 @@ export default function SupplementTracker(): ReactElement {
     mutationFn: async (supplementId: number) => {
       const response = await fetch(`/api/supplements/${supplementId}/take`, {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
         credentials: "include",
       });
 
       if (!response.ok) {
-        throw new Error("Failed to mark supplement as taken");
+        // Try to parse error response as JSON first
+        try {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Failed to mark supplement as taken");
+        } catch (e) {
+          // If JSON parsing fails, use status text
+          throw new Error(`Failed to mark supplement as taken: ${response.statusText}`);
+        }
       }
 
-      return response.json();
+      try {
+        const data = await response.json();
+        return data as Supplement;
+      } catch (e) {
+        throw new Error("Invalid response format from server");
+      }
     },
     onSuccess: (updatedSupplement) => {
       // Update cache by updating the taken supplement
@@ -182,6 +205,7 @@ export default function SupplementTracker(): ReactElement {
       });
     },
     onError: (error: Error) => {
+      console.error("Error taking supplement:", error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -388,8 +412,18 @@ export default function SupplementTracker(): ReactElement {
                         variant="secondary"
                         size="sm"
                         onClick={() => {
-                          if (supplement.id) {
+                          try {
+                            if (!supplement?.id) {
+                              throw new Error("Invalid supplement ID");
+                            }
                             takeSupplement(supplement.id);
+                          } catch (error) {
+                            console.error("Error handling take supplement:", error);
+                            toast({
+                              variant: "destructive",
+                              title: "Error",
+                              description: "Failed to process supplement action",
+                            });
                           }
                         }}
                       >
