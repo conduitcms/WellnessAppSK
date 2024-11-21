@@ -26,7 +26,7 @@ export default function SupplementTracker() {
   const form = useForm<InsertSupplement>({
     resolver: zodResolver(insertSupplementSchema),
     defaultValues,
-    mode: "onChange"
+    mode: "onSubmit"
   });
 
   const { data: supplements, isLoading: isLoadingSupplements, error: supplementsError } = useQuery({
@@ -50,45 +50,32 @@ export default function SupplementTracker() {
 
   const createSupplement = useMutation({
     mutationFn: async (data: InsertSupplement) => {
-      try {
-        // Format reminder time if enabled
-        if (data.reminderEnabled && data.reminderTime) {
-          data.reminderTime = new Date(data.reminderTime);
-        } else {
-          data.reminderTime = null;
-        }
+      console.log('Submitting data:', data);
+      const response = await fetch("/api/supplements", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+      });
 
-        const response = await fetch("/api/supplements", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(data)
-        });
-
-        if (!response.ok) {
-          throw new Error(await response.text());
-        }
-
-        const result = await response.json();
-        console.log('Created supplement:', result);
-        return result;
-      } catch (error) {
-        console.error('Form submission error:', error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to add supplement. Please try again."
-        });
-        throw error;
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Submission error:', errorData);
+        throw new Error(errorData || "Failed to create supplement");
       }
+
+      const result = await response.json();
+      console.log('Server response:', result);
+      return result;
     },
-    onSuccess: () => {
-      form.reset(defaultValues);  // Use the defaultValues object
+    onSuccess: (data) => {
+      console.log('Successfully created supplement:', data);
+      form.reset();
       queryClient.invalidateQueries({ queryKey: ["supplements"] });
       toast({
         title: "Success",
-        description: "Supplement added successfully",
+        description: "Supplement added successfully"
       });
     },
     onError: (error: Error) => {
@@ -110,10 +97,7 @@ export default function SupplementTracker() {
         <CardContent>
           <Form {...form}>
             <form
-              onSubmit={form.handleSubmit((data) => {
-                console.log('Submitting supplement:', data);
-                createSupplement.mutate(data);
-              })}
+              onSubmit={form.handleSubmit((data) => createSupplement.mutate(data))}
               className="space-y-4"
             >
               <FormField
@@ -125,7 +109,7 @@ export default function SupplementTracker() {
                     <FormControl>
                       <Input {...field} placeholder="Enter supplement name" />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-red-500" />
                   </FormItem>
                 )}
               />
@@ -138,7 +122,7 @@ export default function SupplementTracker() {
                     <FormControl>
                       <Input {...field} placeholder="e.g., 500mg" />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-red-500" />
                     <p className="text-sm text-muted-foreground">
                       Specify amount per dose (e.g., 500mg, 1 tablet)
                     </p>
@@ -154,7 +138,7 @@ export default function SupplementTracker() {
                     <FormControl>
                       <Input {...field} placeholder="e.g., Once daily with meals" />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-red-500" />
                     <p className="text-sm text-muted-foreground">
                       Specify how often to take this supplement
                     </p>
