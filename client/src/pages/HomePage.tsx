@@ -26,6 +26,7 @@ export default function HomePage() {
             <h1 className="text-2xl font-bold">
               Wellness Wisdom
             </h1>
+            <DailyChecklist />
             <SupplementTracker />
           </div>
         )}
