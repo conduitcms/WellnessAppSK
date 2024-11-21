@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { insertSupplementSchema, type InsertSupplement } from "@db/schema";
+import { insertSupplementSchema, type InsertSupplement, type Supplement } from "@db/schema";
 
 export default function SupplementTracker() {
   const { toast } = useToast();
@@ -29,7 +29,7 @@ export default function SupplementTracker() {
     mode: "onBlur" // Show errors when field loses focus
   });
 
-  const { data: supplements = [], isLoading: isLoadingSupplements, error: supplementsError } = useQuery<any[]>({
+  const { data: supplements = [], isLoading: isLoadingSupplements, error: supplementsError } = useQuery<Supplement[]>({
     queryKey: ["supplements"],
     queryFn: async () => {
       try {
@@ -276,7 +276,7 @@ export default function SupplementTracker() {
           ) : (
             <div className="space-y-4">
               {supplements?.length > 0 ? (
-                supplements.map((supplement: any) => (
+                supplements.map((supplement: Supplement) => (
                 <div
                   key={supplement.id}
                   className="p-4 border rounded-lg space-y-2"
