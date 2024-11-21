@@ -17,6 +17,7 @@ type SupplementFormData = {
   dosage: string;
   frequency: string;
   reminderEnabled: boolean;
+  reminderTime: string;
   notes: string;
 };
 
@@ -31,6 +32,7 @@ export default function SupplementTracker(): ReactElement {
       dosage: "",
       frequency: "",
       reminderEnabled: false,
+      reminderTime: "08:00",
       notes: "",
     }
   });
@@ -122,6 +124,83 @@ export default function SupplementTracker(): ReactElement {
 
       if (!response.ok) {
         throw new Error("Failed to delete supplement");
+  // Mutation for taking supplements
+  const { mutate: takeSupplement } = useMutation({
+    mutationFn: async (supplementId: number) => {
+      const response = await fetch(`/api/supplements/${supplementId}/take`, {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to mark supplement as taken");
+      }
+
+      return response.json();
+    },
+    onSuccess: (updatedSupplement) => {
+      // Update cache by updating the taken supplement
+      queryClient.setQueryData<Supplement[]>(["supplements"], (old = []) => {
+        return old.map(supplement => 
+          supplement.id === updatedSupplement.id ? updatedSupplement : supplement
+        );
+      });
+
+      toast({
+        title: "Success",
+        description: "Supplement marked as taken",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to mark supplement as taken",
+      });
+    },
+  });
+
+  // Set up notifications
+  React.useEffect(() => {
+    const checkPermission = async () => {
+      if ('Notification' in window) {
+        const permission = await Notification.requestPermission();
+        console.log('Notification permission:', permission);
+      }
+    };
+    
+    checkPermission();
+  }, []);
+
+  // Check for due supplements
+  React.useEffect(() => {
+    const checkDueSupplements = () => {
+      const now = new Date();
+      const currentTime = now.toLocaleTimeString('en-US', { 
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      supplements.forEach(supplement => {
+        if (supplement.reminderEnabled && 
+            supplement.reminderTime === currentTime &&
+            (!supplement.lastTaken || 
+             new Date(supplement.lastTaken).toDateString() !== now.toDateString())) {
+          // Show notification
+          if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification(`Time to take ${supplement.name}`, {
+              body: `${supplement.dosage} - ${supplement.frequency}`,
+              icon: '/favicon.ico'
+            });
+          }
+        }
+      });
+    };
+
+    const interval = setInterval(checkDueSupplements, 60000); // Check every minute
+    return () => clearInterval(interval);
+  }, [supplements]);
       }
 
       return supplementId;
@@ -203,6 +282,46 @@ export default function SupplementTracker(): ReactElement {
                 )}
               />
 
+              <FormField
+                control={form.control}
+                name="reminderEnabled"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">Reminders</FormLabel>
+                      <div className="text-sm text-muted-foreground">
+                        Get notified when it's time to take your supplement
+                      </div>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              {form.watch("reminderEnabled") && (
+                <FormField
+                  control={form.control}
+                  name="reminderTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Reminder Time</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="time"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
               <Button 
                 type="submit" 
                 disabled={isPending}
@@ -240,14 +359,29 @@ export default function SupplementTracker(): ReactElement {
                   className="p-4 border rounded-lg space-y-2"
                 >
                   <div className="flex justify-between items-center">
-                    <div>
+                    <div className="flex-1">
                       <h3 className="font-medium">{supplement.name}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {supplement.dosage}
-                      </p>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <span>{supplement.dosage}</span>
+                        {supplement.reminderEnabled && (
+                          <>
+                            <span>•</span>
+                            <span>{supplement.reminderTime}</span>
+                          </>
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <p className="text-sm">{supplement.frequency}</p>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          // Handle taking supplement
+                          takeSupplement(supplement.id);
+                        }}
+                      >
+                        Take
+                      </Button>
                       <Button
                         variant="destructive"
                         size="sm"
@@ -261,6 +395,11 @@ export default function SupplementTracker(): ReactElement {
                       </Button>
                     </div>
                   </div>
+                  {supplement.lastTaken && (
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Last taken: {new Date(supplement.lastTaken).toLocaleString()}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
