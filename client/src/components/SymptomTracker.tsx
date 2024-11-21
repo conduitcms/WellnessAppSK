@@ -11,10 +11,24 @@ import { type Symptom } from "@db/schema";
 import type { ReactElement } from "react";
 
 // Simplified form data interface
+const SYMPTOM_CATEGORIES = [
+  "Headache",
+  "Nausea",
+  "Fatigue",
+  "Mood Changes",
+  "Sleep Issues",
+  "Cramps",
+  "Bloating",
+  "Other"
+] as const;
+
+type SymptomCategory = typeof SYMPTOM_CATEGORIES[number];
+
 type SymptomFormData = {
-  category: string;
+  category: SymptomCategory;
   severity: number;
   description: string;
+  date: string;
 };
 
 export default function SymptomTracker(): ReactElement {
@@ -24,9 +38,10 @@ export default function SymptomTracker(): ReactElement {
   // Simplified form setup
   const form = useForm<SymptomFormData>({
     defaultValues: {
-      category: "",
+      category: "Other",
       severity: 5,
       description: "",
+      date: new Date().toISOString().split('T')[0]
     }
   });
 
@@ -163,7 +178,16 @@ export default function SymptomTracker(): ReactElement {
                   <FormItem>
                     <FormLabel>Category</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="e.g., Headache, Nausea" />
+                      <select
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        {...field}
+                      >
+                        {SYMPTOM_CATEGORIES.map((category) => (
+                          <option key={category} value={category}>
+                            {category}
+                          </option>
+                        ))}
+                      </select>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -188,6 +212,20 @@ export default function SymptomTracker(): ReactElement {
                     <div className="text-center text-sm text-muted-foreground">
                       {field.value}
                     </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Date</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
