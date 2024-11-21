@@ -1,97 +1,102 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 import { Loader2 } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { insertSymptomSchema, type InsertSymptom } from "@db/schema";
+import { type Symptom } from "@db/schema";
+import type { ReactElement } from "react";
 
-const SYMPTOM_CATEGORIES = [
-  "Pain",
-  "Fatigue",
-  "Mood",
-  "Sleep",
-  "Digestion",
-  "Other",
-];
+// Simplified form data interface
+type SymptomFormData = {
+  category: string;
+  severity: number;
+  description: string;
+};
 
-export default function SymptomTracker() {
+export default function SymptomTracker(): ReactElement {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const form = useForm<InsertSymptom>({
-    resolver: zodResolver(insertSymptomSchema),
+  // Simplified form setup
+  const form = useForm<SymptomFormData>({
     defaultValues: {
       category: "",
-      severity: 1,
+      severity: 5,
       description: "",
-    },
+    }
   });
 
-  const { data: symptoms, isLoading: isLoadingSymptoms, error: symptomsError } = useQuery({
+  // Query for fetching symptoms
+  const { 
+    data: symptoms = [], 
+    isLoading: isLoadingSymptoms 
+  } = useQuery({
     queryKey: ["symptoms"],
     queryFn: async () => {
       try {
         const response = await fetch("/api/symptoms", {
           credentials: "include"
         });
+        
         if (!response.ok) {
-          console.error('Failed to fetch symptoms:', await response.text());
           throw new Error("Failed to fetch symptoms");
         }
+
         const data = await response.json();
-        console.log('Fetched symptoms:', data);
-        return data;
+        console.log("Fetched symptoms:", data);
+        return data as Symptom[];
       } catch (error) {
-        console.error('Error fetching symptoms:', error);
+        console.error("Error fetching symptoms:", error);
         throw error;
       }
-    },
+    }
   });
 
-  const createSymptom = useMutation({
-    mutationFn: async (data: InsertSymptom) => {
+  // Mutation for creating symptoms
+  const { mutate: createSymptom, isPending } = useMutation({
+    mutationFn: async (data: SymptomFormData) => {
       try {
-        // Validate severity is between 1 and 10
-        if (data.severity < 1 || data.severity > 10) {
-          throw new Error("Severity must be between 1 and 10");
-        }
-
+        console.log("Sending symptom data:", data);
         const response = await fetch("/api/symptoms", {
           method: "POST",
-          credentials: "include",
-          headers: { 
+          headers: {
             "Content-Type": "application/json",
-            "Accept": "application/json"
           },
+          credentials: "include",
           body: JSON.stringify(data),
         });
 
         if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Failed to create symptom:', errorText);
-          throw new Error(errorText || "Failed to create symptom");
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Failed to create symptom");
         }
 
-        const result = await response.json();
-        console.log('Created symptom:', result);
-        return result;
+        return response.json();
       } catch (error) {
-        console.error('Error creating symptom:', error);
+        console.error("Error creating symptom:", error);
         throw error;
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["symptoms"] });
+    onSuccess: (newSymptom) => {
+      // Update the cache with the new symptom
+      queryClient.setQueryData<Symptom[]>(["symptoms"], (old = []) => {
+        return [...old, newSymptom];
+      });
+
+      // Reset form
       form.reset();
+
       toast({
         title: "Success",
         description: "Symptom logged successfully",
       });
+
+      // Force a refresh of the symptoms list
+      queryClient.invalidateQueries({ queryKey: ["symptoms"] });
     },
     onError: (error: Error) => {
       toast({
@@ -102,6 +107,46 @@ export default function SymptomTracker() {
     },
   });
 
+  // Add delete mutation
+  const { mutate: deleteSymptom } = useMutation({
+    mutationFn: async (symptomId: number) => {
+      const response = await fetch(`/api/symptoms/${symptomId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete symptom");
+      }
+
+      return symptomId;
+    },
+    onSuccess: (deletedSymptomId) => {
+      // Update cache by removing the deleted symptom
+      queryClient.setQueryData<Symptom[]>(["symptoms"], (old = []) => {
+        return old.filter(symptom => symptom.id !== deletedSymptomId);
+      });
+
+      toast({
+        title: "Success",
+        description: "Symptom deleted successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to delete symptom",
+      });
+    },
+  });
+
+  // Form submission handler
+  const onSubmit = (data: SymptomFormData) => {
+    console.log("Form submitted with data:", data);
+    createSymptom(data);
+  };
+
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <Card>
@@ -110,36 +155,21 @@ export default function SymptomTracker() {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit((data) => createSymptom.mutate(data))}
-              className="space-y-4"
-            >
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
                 name="category"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Category</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {SYMPTOM_CATEGORIES.map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {category}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <Input {...field} placeholder="e.g., Headache, Nausea" />
+                    </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
                 name="severity"
@@ -147,31 +177,22 @@ export default function SymptomTracker() {
                   <FormItem>
                     <FormLabel>Severity (1-10)</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
-                        min="1"
-                        max="10"
-                        {...field}
-                        onChange={(e) => {
-                          const value = parseInt(e.target.value, 10);
-                          if (value < 1 || value > 10) {
-                            form.setError("severity", {
-                              type: "manual",
-                              message: "Severity must be between 1 and 10"
-                            });
-                          } else {
-                            form.clearErrors("severity");
-                          }
-                          field.onChange(value);
-                        }}
+                      <Slider
+                        min={1}
+                        max={10}
+                        step={1}
+                        value={[field.value]}
+                        onValueChange={([value]) => field.onChange(value)}
                       />
                     </FormControl>
-                    <p className="text-sm text-muted-foreground">
-                      Rate the severity from 1 (mild) to 10 (severe)
-                    </p>
+                    <div className="text-center text-sm text-muted-foreground">
+                      {field.value}
+                    </div>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
                 name="description"
@@ -179,16 +200,19 @@ export default function SymptomTracker() {
                   <FormItem>
                     <FormLabel>Description</FormLabel>
                     <FormControl>
-                      <Input {...field} value={field.value ?? ''} />
+                      <Input {...field} placeholder="Add any additional details" />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
+
               <Button 
                 type="submit" 
-                disabled={createSymptom.isPending}
+                disabled={isPending}
+                className="w-full"
               >
-                {createSymptom.isPending ? (
+                {isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Logging...
@@ -204,34 +228,54 @@ export default function SymptomTracker() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Recent Symptoms</CardTitle>
+          <CardTitle>Symptom History</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoadingSymptoms ? (
-            <p className="text-center py-4">Loading symptoms...</p>
-          ) : symptomsError ? (
-            <div className="text-center py-4 text-destructive">
-              Error loading symptoms: {symptomsError.message}
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="h-6 w-6 animate-spin" />
+              <span className="ml-2">Loading symptoms...</span>
             </div>
-          ) : (
+          ) : symptoms.length > 0 ? (
             <div className="space-y-4">
-              {symptoms?.map((symptom: any) => (
+              {symptoms.map((symptom) => (
                 <div
                   key={symptom.id}
                   className="p-4 border rounded-lg space-y-2"
                 >
-                  <div className="flex justify-between">
-                    <span className="font-medium">{symptom.category}</span>
-                    <span>Severity: {symptom.severity}</span>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="font-medium">{symptom.category}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {symptom.description}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="text-sm">
+                        Severity: {symptom.severity}
+                      </div>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          if (window.confirm('Are you sure you want to delete this symptom?')) {
+                            deleteSymptom(symptom.id);
+                          }
+                        }}
+                      >
+                        Delete
+                      </Button>
+                    </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    {symptom.description}
-                  </p>
-                  <time className="text-xs text-muted-foreground">
-                    {new Date(symptom.date).toLocaleDateString()}
-                  </time>
+                  <div className="text-xs text-muted-foreground">
+                    {new Date(symptom.date).toLocaleString()}
+                  </div>
                 </div>
               ))}
+            </div>
+          ) : (
+            <div className="text-center py-4 text-muted-foreground">
+              No symptoms logged yet
             </div>
           )}
         </CardContent>

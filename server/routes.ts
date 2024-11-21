@@ -518,4 +518,68 @@ export function registerRoutes(app: Express) {
         });
     }
   });
+
+  // Delete symptom endpoint
+  app.delete("/api/symptoms/:id", ensureAuth, async (req: Request, res: Response) => {
+    try {
+      const symptomId = parseInt(req.params.id);
+      const userId = req.user!.id;
+
+      // First check if the symptom belongs to the user
+      const [symptom] = await db
+        .select()
+        .from(symptoms)
+        .where(and(
+          eq(symptoms.id, symptomId),
+          eq(symptoms.userId, userId)
+        ))
+        .limit(1);
+
+      if (!symptom) {
+        return res.status(404).json({ message: "Symptom not found" });
+      }
+
+      // Delete the symptom
+      await db
+        .delete(symptoms)
+        .where(eq(symptoms.id, symptomId));
+
+      res.json({ message: "Symptom deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting symptom:", error);
+      res.status(500).json({ message: "Failed to delete symptom" });
+    }
+  });
+
+  // Delete supplement endpoint
+  app.delete("/api/supplements/:id", ensureAuth, async (req: Request, res: Response) => {
+    try {
+      const supplementId = parseInt(req.params.id);
+      const userId = req.user!.id;
+
+      // First check if the supplement belongs to the user
+      const [supplement] = await db
+        .select()
+        .from(supplements)
+        .where(and(
+          eq(supplements.id, supplementId),
+          eq(supplements.userId, userId)
+        ))
+        .limit(1);
+
+      if (!supplement) {
+        return res.status(404).json({ message: "Supplement not found" });
+      }
+
+      // Delete the supplement
+      await db
+        .delete(supplements)
+        .where(eq(supplements.id, supplementId));
+
+      res.json({ message: "Supplement deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting supplement:", error);
+      res.status(500).json({ message: "Failed to delete supplement" });
+    }
+  });
 }

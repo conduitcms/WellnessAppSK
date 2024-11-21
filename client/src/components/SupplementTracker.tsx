@@ -112,6 +112,40 @@ export default function SupplementTracker(): ReactElement {
     },
   });
 
+  // Add delete mutation
+  const { mutate: deleteSupplement } = useMutation({
+    mutationFn: async (supplementId: number) => {
+      const response = await fetch(`/api/supplements/${supplementId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete supplement");
+      }
+
+      return supplementId;
+    },
+    onSuccess: (deletedSupplementId) => {
+      // Update cache by removing the deleted supplement
+      queryClient.setQueryData<Supplement[]>(["supplements"], (old = []) => {
+        return old.filter(supplement => supplement.id !== deletedSupplementId);
+      });
+
+      toast({
+        title: "Success",
+        description: "Supplement deleted successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to delete supplement",
+      });
+    },
+  });
+
   // Form submission handler
   const onSubmit = (data: SupplementFormData) => {
     console.log("Form submitted with data:", data);
@@ -212,7 +246,20 @@ export default function SupplementTracker(): ReactElement {
                         {supplement.dosage}
                       </p>
                     </div>
-                    <p className="text-sm">{supplement.frequency}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm">{supplement.frequency}</p>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          if (window.confirm('Are you sure you want to delete this supplement?')) {
+                            deleteSupplement(supplement.id);
+                          }
+                        }}
+                      >
+                        Delete
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))}
