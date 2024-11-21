@@ -20,7 +20,6 @@ interface AuthFormValues {
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
-  const [showPasswordReset, setShowPasswordReset] = useState(false);
   const { login, register } = useUser();
   const { toast } = useToast();
   const form = useForm<AuthFormValues>({
@@ -130,16 +129,7 @@ export default function AuthPage() {
                 )}
               />
               <div className="flex flex-col space-y-2">
-                {isLogin && (
-                  <Button
-                    type="button"
-                    variant="link"
-                    className="px-0 font-normal"
-                    onClick={() => setShowPasswordReset(true)}
-                  >
-                    Forgot password?
-                  </Button>
-                )}
+                {/* Password reset functionality removed */}
                 <Button type="submit">
                   {isLogin ? "Sign In" : "Create Account"}
                 </Button>

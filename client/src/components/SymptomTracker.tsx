@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useForm, ControllerRenderProps, FieldValues } from "react-hook-form";
+import { useForm, ControllerRenderProps } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -93,7 +93,7 @@ export default function SymptomTracker(): ReactElement {
       category: "Other",
       severity: 5,
       description: "",
-      date: new Date().toISOString().split('T')[0],
+      date: new Date().toISOString(),
       mood: "Neutral",
       moodIntensity: 5
     }
@@ -232,7 +232,7 @@ export default function SymptomTracker(): ReactElement {
               <FormField
                 control={form.control}
                 name="category"
-                render={({ field }: { field: ControllerRenderProps<SymptomFormData, string> }) => (
+                render={({ field }: { field: ControllerRenderProps<SymptomFormData, "category"> }) => (
                   <FormItem>
                     <FormLabel>Category</FormLabel>
                     <FormControl>
@@ -255,7 +255,7 @@ export default function SymptomTracker(): ReactElement {
               <FormField
                 control={form.control}
                 name="severity"
-                render={({ field }: { field: ControllerRenderProps<SymptomFormData, string> }) => (
+                render={({ field }: { field: ControllerRenderProps<SymptomFormData, "severity"> }) => (
                   <FormItem>
                     <FormLabel>Severity (1-10)</FormLabel>
                     <FormControl>
@@ -278,13 +278,13 @@ export default function SymptomTracker(): ReactElement {
               <FormField
                 control={form.control}
                 name="date"
-                render={({ field }: { field: ControllerRenderProps<SymptomFormData, string> }) => (
+                render={({ field }: { field: ControllerRenderProps<SymptomFormData, "date"> }) => (
                   <FormItem>
                     <FormLabel>Date</FormLabel>
                     <FormControl>
                       <DatePicker
                         selected={new Date(field.value)}
-                        onChange={(date: Date) => field.onChange(date.toISOString())}
+                        onChange={(date: Date | null) => field.onChange(date ? date.toISOString() : new Date().toISOString())}
                         dateFormat="yyyy-MM-dd"
                       />
                     </FormControl>
@@ -296,7 +296,7 @@ export default function SymptomTracker(): ReactElement {
               <FormField
                 control={form.control}
                 name="mood"
-                render={({ field }: { field: ControllerRenderProps<SymptomFormData, string> }) => (
+                render={({ field }: { field: ControllerRenderProps<SymptomFormData, "mood"> }) => (
                   <FormItem>
                     <FormLabel>Mood</FormLabel>
                     <FormControl>
@@ -319,7 +319,7 @@ export default function SymptomTracker(): ReactElement {
               <FormField
                 control={form.control}
                 name="moodIntensity"
-                render={({ field }: { field: ControllerRenderProps<SymptomFormData, string> }) => (
+                render={({ field }: { field: ControllerRenderProps<SymptomFormData, "moodIntensity"> }) => (
                   <FormItem>
                     <FormLabel>Mood Intensity (1-10)</FormLabel>
                     <FormControl>
@@ -342,7 +342,7 @@ export default function SymptomTracker(): ReactElement {
               <FormField
                 control={form.control}
                 name="description"
-                render={({ field }: { field: ControllerRenderProps<SymptomFormData, string> }) => (
+                render={({ field }: { field: ControllerRenderProps<SymptomFormData, "description"> }) => (
                   <FormItem>
                     <FormLabel>Description</FormLabel>
                     <FormControl>
