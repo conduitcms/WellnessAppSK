@@ -159,8 +159,11 @@ export default function SymptomTracker(): ReactElement {
   // Form submission handler
   const onSubmit = (data: SymptomFormData) => {
     console.log("Form submitted with data:", data);
-    // Send the data directly without date conversion
-    createSymptom(data);
+    // Send the data with the date as a string
+    createSymptom({
+      ...data,
+      date: data.date // Already a string from the date input
+    });
   };
 
   return (

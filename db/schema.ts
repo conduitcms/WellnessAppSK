@@ -65,7 +65,9 @@ export interface User {
 }
 export type SelectUser = z.infer<typeof selectUserSchema>;
 
-export const insertSymptomSchema = createInsertSchema(symptoms);
+export const insertSymptomSchema = createInsertSchema(symptoms, {
+  date: z.string().transform((str) => new Date(str))
+});
 export const selectSymptomSchema = createSelectSchema(symptoms);
 export type InsertSymptom = z.infer<typeof insertSymptomSchema>;
 export type Symptom = z.infer<typeof selectSymptomSchema>;
