@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Home, Activity, LineChart, Menu } from "lucide-react";
-import { DailyChecklist } from "../components/DailyChecklist";
+
 import SymptomTracker from "../components/SymptomTracker";
 import SupplementTracker from "../components/SupplementTracker";
 import HealthMetrics from "../components/HealthMetrics";

@@ -5,7 +5,7 @@ import session from "express-session";
 import createMemoryStore from "memorystore";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
-import { users, type User } from "@db/schema";
+import { users } from "@db/schema";
 import { db } from "../db";
 import { eq } from "drizzle-orm";
 
@@ -106,7 +106,7 @@ export function setupAuth(app: Express) {
       usernameField: 'email',
       passwordField: 'password',
       passReqToCallback: true
-    }, async (req, email, password, done) => {
+    }, async (_req, email, password, done) => {
       const timeout = setTimeout(() => {
         done(new Error('Authentication timeout'), false);
       }, 30000); // 30 second timeout

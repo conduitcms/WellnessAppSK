@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "../hooks/use-user";
-import { insertUserSchema, type InsertUser } from "@db/schema";
+import { insertUserSchema } from "@db/schema";
 
 interface AuthFormValues {
   username: string;
@@ -23,7 +23,7 @@ export default function AuthPage() {
   const { login, register } = useUser();
   const { toast } = useToast();
 
-  const [showPasswordReset, setShowPasswordReset] = useState(false);
+  // State for password reset functionality will be implemented later
   const form = useForm<AuthFormValues>({
     resolver: zodResolver(insertUserSchema),
     defaultValues: {

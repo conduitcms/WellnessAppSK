@@ -115,7 +115,7 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  app.post("/api/login", passport.authenticate("local"), (req: Request, res: Response) => {
+  app.post("/api/login", passport.authenticate("local"), (_req: Request, res: Response) => {
     res.json({ message: "Login successful" });
   });
 
@@ -333,9 +333,6 @@ export function registerRoutes(app: Express) {
       // Transform the data for validation
       result.data.reminderTime = result.data.reminderEnabled ? result.data.reminderTime : null;
 
-      // Validate the transformed data
-      const validatedData = insertSupplementSchema.parse(result.data);
-
       // Start transaction
       const supplement = await db.transaction(async (tx) => {
         try {
@@ -486,6 +483,14 @@ export function registerRoutes(app: Express) {
 
   // Error handling middleware
   app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+    // Log request details for debugging
+    console.error('Error occurred:', {
+      method: req.method,
+      path: req.path,
+      error: err.message
+    });
+    
+    next(err);
     console.error('Server error:', err);
     
     if (err.name === 'TimeoutError') {

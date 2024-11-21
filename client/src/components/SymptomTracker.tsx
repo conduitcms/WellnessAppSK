@@ -52,12 +52,34 @@ type SymptomFormData = {
 
 // Define validation schema
 const symptomFormSchema = z.object({
-  category: z.string().nonempty("Category is required"),
-  severity: z.number().min(1).max(10),
-  description: z.string().max(500, "Description is too long"),
-  date: z.string(),
-  mood: z.string().optional(),
-  moodIntensity: z.number().min(1).max(10).optional(),
+  category: z.enum(SYMPTOM_CATEGORIES, {
+    required_error: "Please select a symptom category",
+    invalid_type_error: "Invalid category selected"
+  }),
+  severity: z.number({
+    required_error: "Severity rating is required",
+    invalid_type_error: "Severity must be a number"
+  }).min(1, "Severity must be at least 1")
+    .max(10, "Severity cannot be greater than 10"),
+  description: z.string()
+    .min(3, "Description must be at least 3 characters")
+    .max(500, "Description cannot exceed 500 characters")
+    .transform(str => str.trim()),
+  date: z.string({
+    required_error: "Date is required",
+    invalid_type_error: "Invalid date format"
+  }).refine(date => !isNaN(Date.parse(date)), {
+    message: "Please enter a valid date"
+  }),
+  mood: z.enum(MOOD_OPTIONS, {
+    required_error: "Please select a mood",
+    invalid_type_error: "Invalid mood selected"
+  }).optional(),
+  moodIntensity: z.number({
+    invalid_type_error: "Mood intensity must be a number"
+  }).min(1, "Intensity must be at least 1")
+    .max(10, "Intensity cannot be greater than 10")
+    .optional(),
 });
 
 export default function SymptomTracker(): ReactElement {
