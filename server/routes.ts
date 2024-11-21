@@ -135,11 +135,42 @@ export function registerRoutes(app: Express) {
 
   // Middleware to ensure user is authenticated with test account
   const ensureAuth = async (req: Request, res: Response, next: NextFunction) => {
-    if (req.isAuthenticated()) {
-      return next();
+    console.log('Auth check - isAuthenticated:', req.isAuthenticated());
+    
+    if (req.isAuthenticated() && req.user) {
+      console.log('User authenticated:', { userId: req.user.id });
+      
+      // Verify session is still valid
+      try {
+        const [user] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, req.user.id))
+          .limit(1);
+
+        if (!user) {
+          console.error('User not found in database:', req.user.id);
+          req.logout((err) => {
+            if (err) console.error('Error logging out invalid user:', err);
+          });
+          return res.status(401).json({
+            message: "Authentication required",
+            error: "Invalid user session"
+          });
+        }
+
+        return next();
+      } catch (error) {
+        console.error('Error verifying user session:', error);
+        return res.status(500).json({
+          message: "Authentication error",
+          error: "Session verification failed"
+        });
+      }
     }
 
     try {
+      console.log('Attempting to find test account');
       // Find test account
       const [testUser] = await db
         .select()
@@ -148,20 +179,31 @@ export function registerRoutes(app: Express) {
         .limit(1);
 
       if (!testUser) {
-        return res.status(500).send("Test account not found");
+        console.error('Test account not found');
+        return res.status(401).json({
+          message: "Authentication required",
+          error: "Test account not found"
+        });
       }
 
       // Auto-login with test account
       req.login(testUser, (err) => {
         if (err) {
           console.error("Error logging in test account:", err);
-          return res.status(500).send("Authentication failed");
+          return res.status(500).json({
+            message: "Authentication failed",
+            error: err.message
+          });
         }
+        console.log('Successfully logged in test account:', testUser.id);
         next();
       });
     } catch (error) {
       console.error("Error in auth middleware:", error);
-      res.status(500).send("Authentication failed");
+      res.status(500).json({
+        message: "Authentication failed",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   };
 
@@ -212,13 +254,39 @@ export function registerRoutes(app: Express) {
   // Supplements routes
   app.get("/api/supplements", ensureAuth, async (req: Request, res: Response) => {
     try {
+      // Verify user session is still valid
+      if (!req.user || !req.user.id) {
+        console.error('Invalid user session during supplements fetch');
+        return res.status(401).json({
+          message: "Authentication required",
+          error: "User session invalid"
+        });
+      }
+
+      // Log the fetch attempt
+      console.log('Fetching supplements for user:', req.user.id);
+
       const userSupplements = await db
         .select()
         .from(supplements)
-        .where(eq(supplements.userId, req.user!.id));
+        .where(eq(supplements.userId, req.user.id));
+
+      // Log the fetch results
+      console.log(`Found ${userSupplements.length} supplements for user ${req.user.id}`);
+
+      // Check if supplements exist
+      if (userSupplements.length === 0) {
+        console.log('No supplements found for user:', req.user.id);
+      }
+
       res.json(userSupplements);
     } catch (error) {
-      console.error('Error fetching supplements:', error);
+      console.error('Error fetching supplements:', {
+        userId: req.user?.id,
+        error: error instanceof Error ? error.message : "Unknown error",
+        stack: error instanceof Error ? error.stack : undefined
+      });
+
       res.status(500).json({
         message: "Failed to fetch supplements",
         error: error instanceof Error ? error.message : "Unknown error",
@@ -227,40 +295,73 @@ export function registerRoutes(app: Express) {
   });
 
   app.post("/api/supplements", ensureAuth, async (req: Request, res: Response) => {
-    try {
-      console.log('Received supplement creation request:', {
-        ...req.body,
-        userId: req.user!.id
-      });
+    // Start transaction
+    const tx = db.transaction(async (tx) => {
+      try {
+        console.log('Received supplement creation request:', {
+          ...req.body,
+          userId: req.user!.id
+        });
 
-      // Validate request body
-      const result = insertSupplementSchema.safeParse({ ...req.body, userId: req.user!.id });
-      if (!result.success) {
-        console.error('Supplement validation failed:', result.error);
-        return res.status(400).json({
-          message: "Invalid supplement data",
-          errors: result.error.issues.map(issue => ({
-            field: issue.path.join('.'),
-            message: issue.message
-          }))
+        // Verify user session is still valid
+        if (!req.user || !req.user.id) {
+          throw new Error('User session invalid');
+        }
+
+        // Validate request body
+        const result = insertSupplementSchema.safeParse({ ...req.body, userId: req.user.id });
+        if (!result.success) {
+          console.error('Supplement validation failed:', result.error);
+          return res.status(400).json({
+            message: "Invalid supplement data",
+            errors: result.error.issues.map(issue => ({
+              field: issue.path.join('.'),
+              message: issue.message
+            }))
+          });
+        }
+
+        // Handle reminder time
+        if (result.data.reminderEnabled && result.data.reminderTime) {
+          result.data.reminderTime = new Date(result.data.reminderTime);
+        }
+
+        // Insert within transaction
+        const [supplement] = await tx.insert(supplements).values(result.data).returning();
+        console.log('Successfully created supplement:', supplement);
+
+        // Verify the insert was successful
+        const [verifiedSupplement] = await tx
+          .select()
+          .from(supplements)
+          .where(eq(supplements.id, supplement.id))
+          .limit(1);
+
+        if (!verifiedSupplement) {
+          throw new Error('Supplement verification failed after insert');
+        }
+
+        return supplement;
+      } catch (error) {
+        console.error('Transaction error:', error);
+        throw error;
+      }
+    });
+
+    try {
+      const supplement = await tx;
+      res.json(supplement);
+    } catch (error) {
+      console.error('Error creating supplement:', error);
+      
+      // Handle specific error types
+      if (error instanceof Error && error.message === 'User session invalid') {
+        return res.status(401).json({
+          message: "Authentication required",
+          error: "User session invalid"
         });
       }
 
-      // Handle reminder time
-      if (result.data.reminderEnabled && result.data.reminderTime) {
-        result.data.reminderTime = new Date(result.data.reminderTime);
-      }
-
-      try {
-        const [supplement] = await db.insert(supplements).values(result.data).returning();
-        console.log('Successfully created supplement:', supplement);
-        res.json(supplement);
-      } catch (dbError) {
-        console.error('Database error while creating supplement:', dbError);
-        throw new Error('Failed to save supplement to database');
-      }
-    } catch (error) {
-      console.error('Error creating supplement:', error);
       res.status(500).json({
         message: "Failed to create supplement",
         error: error instanceof Error ? error.message : "Unknown error",
