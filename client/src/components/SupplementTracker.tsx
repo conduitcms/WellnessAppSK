@@ -26,7 +26,7 @@ export default function SupplementTracker() {
   const form = useForm<InsertSupplement>({
     resolver: zodResolver(insertSupplementSchema),
     defaultValues,
-    mode: "onChange"  // Show errors immediately when fields are touched
+    mode: "onSubmit"  // Show errors on form submission
   });
 
   const { data: supplements, isLoading: isLoadingSupplements, error: supplementsError } = useQuery({
@@ -83,7 +83,7 @@ export default function SupplementTracker() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to add supplement"
+        description: error.message || "Failed to add supplement. Please check all required fields."
       });
     },
   });
@@ -98,16 +98,7 @@ export default function SupplementTracker() {
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit((data) => {
-                const result = form.formState.isValid;
-                if (!result) {
-                  console.error('Form validation failed');
-                  toast({
-                    variant: "destructive",
-                    title: "Error",
-                    description: "Please fill in all required fields"
-                  });
-                  return;
-                }
+                console.log('Form data:', data);
                 createSupplement.mutate(data);
               })}
               className="space-y-4"
