@@ -26,7 +26,7 @@ export default function SupplementTracker() {
   const form = useForm<InsertSupplement>({
     resolver: zodResolver(insertSupplementSchema),
     defaultValues,
-    mode: "onSubmit"
+    mode: "onChange"  // Show errors immediately when fields are touched
   });
 
   const { data: supplements, isLoading: isLoadingSupplements, error: supplementsError } = useQuery({
@@ -97,7 +97,19 @@ export default function SupplementTracker() {
         <CardContent>
           <Form {...form}>
             <form
-              onSubmit={form.handleSubmit((data) => createSupplement.mutate(data))}
+              onSubmit={form.handleSubmit((data) => {
+                const result = form.formState.isValid;
+                if (!result) {
+                  console.error('Form validation failed');
+                  toast({
+                    variant: "destructive",
+                    title: "Error",
+                    description: "Please fill in all required fields"
+                  });
+                  return;
+                }
+                createSupplement.mutate(data);
+              })}
               className="space-y-4"
             >
               <FormField
